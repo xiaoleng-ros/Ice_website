@@ -1,0 +1,13 @@
+{
+  "name": "ice_website",
+  "version": "1.0.0",
+  "description": "- 支持对图标、项目、分类、主题样式、标签、描述、左侧信息进行增删改查。  \r - 方便编辑名称、图标、点击.js事件等。  \r - 可控制贪吃蛇、侧边栏、技能的开关。  \r - 支持后台**多主题切换**，细致修改所有主题细节。",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
