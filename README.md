@@ -5,8 +5,8 @@
 - 可控制贪吃蛇、侧边栏、技能的开关。  
 - 支持后台**多主题切换**，细致修改所有主题细节。  
 
-<!-- >**演示站**：[https://zyyo.cc](https://zyyo.cc)  
->**后台**：[https://zyyo.cc/admin](https://zyyo.cc/admin)  
+>**演示站**：[https://ice-website-wine.vercel.app/](https://ice-website-wine.vercel.app/)  
+<!-- >**后台**：[https://zyyo.cc/admin](https://zyyo.cc/admin)  
 >**账号**：admin  
 >**密码**：123456   -->
 
