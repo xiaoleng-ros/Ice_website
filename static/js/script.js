@@ -174,3 +174,16 @@ window.addEventListener('load', function() {
     }, 100);
 });
 
+
+// 计算网站运行时间
+function calculateUptime() {
+    const startDate = new Date('2025-09-20'); // 网站起始日期
+    const currentDate = new Date();
+    const timeDiff = currentDate.getTime() - startDate.getTime();
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    document.getElementById('website-uptime').textContent = days;
+}
+
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', calculateUptime);
+
