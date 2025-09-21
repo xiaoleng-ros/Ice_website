@@ -295,7 +295,7 @@ body {
 
 
 .Iceuu-right {
-    width: calc(100% - 230px);
+    width: calc(100% - 230px - 220px);
     display: flex;
     padding: 20px;
   position: relative;
@@ -875,4 +875,1441 @@ footer {
 
 .onoffswitch-checkbox:checked+.onoffswitch-label .onoffswitch-switch {
     right: 50%;
+}
+
+/* Music Player Styles */
+#music-player {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 200px;
+    background-color: var(--bg-color-light);
+    z-index: 1;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1000;
+
+}
+
+#lyrics-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 1000;
+    display: none; /* 默认隐藏 */
+}
+
+#lyrics-display {
+    font-size: 14px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-player {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+    overflow: visible; /* Changed to visible to allow arm to extend outside */
+    border: 5px solid #222;
+}
+
+#play-pause-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#play-pause-btn svg {
+    width: 48px;
+    height: 48px;
+    color: white; /* Adjust color as needed */
+}
+
+
+
+.record-player .record {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #1a1a1a; /* Darker color for the record */
+    object-fit: cover;
+    animation: rotate 10s linear infinite;
+    animation-play-state: paused; /* Paused by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-image: url('./static/img/i1.png'); /* Default cover */
+    background-size: cover;
+    background-position: center;
+}
+
+.record-player .album-art {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+.record-player.playing .record {
+    animation-play-state: running;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    z-index: 1;
+    border: 5px solid #222;
+}
+
+.record-player .arm {
+    position: absolute;
+    top: -20px; /* Adjust position as needed */
+    left: -80px; /* Adjust position as needed */
+    width: 120px;
+    height: 10px;
+    background-color: #ccc;
+    border-radius: 5px;
+    transform-origin: 100% 50%; /* Pivot point for rotation */
+    transform: rotate(-30deg); /* Initial rotation */
+    z-index: 2;
+}
+
+.record-player .arm::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.record-player .arm::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.record-player::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
 }

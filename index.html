@@ -9,11 +9,11 @@
 		Iceuu </title>
 	<link rel="icon" href="./static/img/favicon.ico">
 	<meta name="description" content="整天半吊子和不学无术的坏孩子,梦想成为庄稼地里的读书人.....">
-	<meta name="keywords" content="Iceuu,张扬YO,ZYYO,张扬主页,ZYYO引导页,zhangyang">
+	<meta name="keywords" content="Iceuu,张杨YO,ZYYO,张杨主页,ZYYO引导页,zhangyang">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<link rel="stylesheet" href="./static/css/style.css">
 	<link rel="stylesheet" href="./static/css/root.css">
-
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 </head>
 
 <body>
@@ -33,7 +33,7 @@
 				<div class="left-des-item"><svg t="1705773709627" class="icon" viewBox="0 0 1024 1024" 
 					version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1478">
 					<path d="M512 249.976471c-99.388235 0-180.705882 81.317647-180.705882 180.705882s81.317647 
-					180.705882 180.705882 180.705882 180.705882-81.317647 
+					180.705882 180.705882 180.705882-81.317647 
 					180.705882-180.705882-81.317647-180.705882-180.705882-180.705882z m0 
 					301.17647c-66.258824 0-120.470588-54.211765-120.470588-120.470588s54.211765-120.470588 
 					120.470588-120.470588 120.470588 54.211765 120.470588 120.470588-54.211765 120.470588-120.470588 120.470588z" 
@@ -154,6 +154,29 @@
 					<img id="skillWap" src="./static/svg/skillWap.svg" alt="" srcset="">
 				</div>
 			</content>
+			<div id="music-player">
+				<div class="record-player">
+					<div class="record"></div>
+					<img src="./static/img/music.png" alt="Album Art" class="album-art">
+
+					<button id="play-pause-btn">
+                        <svg id="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                        </svg>
+                        <svg id="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <path d="M6 19H10V5H6V19ZM14 5H18V19H14V5Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+				</div>
+				<div class="controls">
+				</div>
+				<div class="progress-bar-container" id="progress-bar-container">
+					<div class="progress-bar" id="progress-bar"></div>
+				</div>
+			</div>
+			<div id="lyrics-container">
+				<p id="lyrics-display"></p>
+			</div>
 		</div>
 	</div>
 	<footer>
