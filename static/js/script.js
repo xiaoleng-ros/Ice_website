@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 requestAnimationFrame(updateProgressBar);
                 if (lyrics.length > 0) {
                     lyricsContainer.style.display = 'block';
-                    lyricsInterval = setInterval(displayLyrics, 100); // Update lyrics every 100ms
+                    lyricsInterval = setInterval(displayLyrics, 500); // Update lyrics every 500ms for better performance
                 }
             },
             onpause: function () {

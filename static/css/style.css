@@ -28,6 +28,29 @@
     transition: background-color 0.2s ease;
 }
 
+/* 优化滚动性能 */
+html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* 减少重绘和回流 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    /* 启用硬件加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* 优化滚动性能 */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    /* 优化渲染性能 */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
+}
+
 a:hover,
 a:link,
 a:visited,
@@ -179,6 +202,11 @@ body {
     left: 0;
     align-items: center;
     flex-direction: column;
+    /* 优化滚动性能 */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+    transform: translateZ(0);
 }
 
 
@@ -258,6 +286,11 @@ body {
     padding-left: 8px;
     scroll-snap-type: y mandatory;
     overflow-y: scroll;
+    /* 优化滚动性能 */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+    transform: translateZ(0);
 }
 
 #line li {
@@ -383,7 +416,11 @@ body {
     align-items: center;
     overflow-x: scroll;
     margin-top: 20px;
-
+    /* 优化滚动性能 */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+    transform: translateZ(0);
 }
 
 .iconContainer::-webkit-scrollbar {
