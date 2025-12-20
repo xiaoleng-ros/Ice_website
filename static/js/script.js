@@ -60,108 +60,65 @@ tc_main[0].addEventListener('click', function (event) {
 
 
 
-function setCookie(name, value, days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + value + expires + "; path=/";
-}
 
-function getCookie(name) {
-    var nameEQ = name + "=";
-    var cookies = document.cookie.split(';');
-    for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i];
-        while (cookie.charAt(0) == ' ') {
-            cookie = cookie.substring(1, cookie.length);
-        }
-        if (cookie.indexOf(nameEQ) == 0) {
-            return cookie.substring(nameEQ.length, cookie.length);
-        }
-    }
-    return null;
-}
 
 
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    var html = document.querySelector('html');
-    var themeState = getCookie("themeState") || "Light";
-    var tanChiShe = document.getElementById("tanChiShe");
+    // 背景轮播逻辑 (双图层交替淡入淡出实现无缝衔接)
+    let currentBgIndex = 1;
+    const maxBgIndex = 11; // 目前文件夹中只有 1~11.jpg
+    const bgInterval = 5000; // 5秒
+    const bgLayers = [
+        document.querySelector('.Iceuu-background.bg-1'),
+        document.querySelector('.Iceuu-background.bg-2')
+    ];
+    let activeLayerIndex = 0;
 
-    function changeTheme(theme) {
-        tanChiShe.src = "./static/svg/snake-" + theme + ".svg";
-        html.dataset.theme = theme;
-        setCookie("themeState", theme, 365);
-        themeState = theme;
-    }
+    function changeBackground() {
+        const nextBgIndex = (currentBgIndex % maxBgIndex) + 1;
+        const nextBgUrl = `./static/img/background/${nextBgIndex}.jpg`;
+        
+        // 预加载下一张图片
+        const img = new Image();
+        img.src = nextBgUrl;
+        
+        // 图片加载成功
+        img.onload = function() {
+            const inactiveLayerIndex = 1 - activeLayerIndex;
+            const inactiveLayer = bgLayers[inactiveLayerIndex];
+            const activeLayer = bgLayers[activeLayerIndex];
 
-    var Checkbox = document.getElementById('myonoffswitch')
-    Checkbox.addEventListener('change', function () {
-        if (themeState == "Dark") {
-            changeTheme("Light");
-        } else if (themeState == "Light") {
-            changeTheme("Dark");
-        } else {
-            changeTheme("Dark");
-        }
-    });
-
-    if (themeState == "Dark") {
-        Checkbox.checked = false;
-    }
-
-    changeTheme(themeState);
-
-
-
-    /*
-    var fpsElement = document.createElement('div');
-    fpsElement.id = 'fps';
-    fpsElement.style.zIndex = '10000';
-    fpsElement.style.position = 'fixed';
-    fpsElement.style.left = '0';
-    document.body.insertBefore(fpsElement, document.body.firstChild);
-    
-    var showFPS = (function () {
-        var requestAnimationFrame =
-            window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.oRequestAnimationFrame ||
-            window.msRequestAnimationFrame;
-    
-        var fps = 0,
-            lastLoop = new Date().getTime(),
-            offset, step, appendFps;
-    
-        appendFps = function (fpsValue) {
-            fpsElement.textContent = 'FPS: ' + fpsValue;
-        };
-    
-        step = function () {
-            offset = new Date().getTime() - lastLoop;
-            fps += 1;
-            if (offset >= 1000) {
-                lastLoop = new Date().getTime();
-                appendFps(fps);
-                fps = 0;
+            if (inactiveLayer) {
+                inactiveLayer.style.backgroundImage = `url('${nextBgUrl}')`;
+                inactiveLayer.classList.add('active');
             }
-            requestAnimationFrame(step);
+            
+            if (activeLayer) {
+                activeLayer.classList.remove('active');
+            }
+
+            activeLayerIndex = inactiveLayerIndex;
+            currentBgIndex = nextBgIndex;
+            console.log(`背景已平滑切换至: ${nextBgUrl}`);
         };
+
+        // 图片加载失败处理 (防止卡死)
+        img.onerror = function() {
+            console.error(`无法加载图片: ${nextBgUrl}，跳过该图`);
+            currentBgIndex = nextBgIndex; // 跳过这张图，下次尝试加载下一张
+        };
+    }
+
+    // 初始化第一张背景
+    if (bgLayers[0]) {
+        bgLayers[0].style.backgroundImage = `url('./static/img/background/1.jpg')`;
+        bgLayers[0].classList.add('active');
+    }
     
-        return step;
-    })();
-    showFPS();
-    */
-    
-    //pop('./static/img/tz.jpg')
-    
-    
+    // 设置定时轮播
+    setInterval(changeBackground, bgInterval);
 });
 
 
@@ -171,6 +128,9 @@ var pageLoading = document.querySelector("#Iceuu-loading");
 window.addEventListener('load', function() {
     setTimeout(function () {
         pageLoading.style.opacity = '0';
+        setTimeout(function() {
+            pageLoading.style.display = 'none';
+        }, 500);
     }, 100);
 });
 
@@ -350,5 +310,82 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Load the first song on page load
     loadSong(currentSongIndex);
+});
+
+// 天气与时钟部件逻辑
+document.addEventListener('DOMContentLoaded', function () {
+    const dateElement = document.getElementById('widget-date');
+    const timeElement = document.getElementById('widget-time');
+    const addressElement = document.getElementById('weather-address');
+    const conditionElement = document.getElementById('weather-condition');
+    const tempElement = document.getElementById('weather-temp');
+    const windElement = document.getElementById('weather-wind');
+
+    function updateClock() {
+        const now = new Date();
+        
+        // 更新日期
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const date = now.getDate();
+        const dayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        const day = dayNames[now.getDay()];
+        dateElement.textContent = `${year} 年 ${month} 月 ${date} 日 ${day}`;
+
+        // 更新时间
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    async function updateWeather() {
+        try {
+            // 1. 获取位置信息 (使用 ip-api.com 获取中文地址)
+            const locRes = await fetch('http://ip-api.com/json/?lang=zh-CN');
+            const locData = await locRes.json();
+            
+            let city = locData.city || '未知城市';
+            let region = locData.regionName || '';
+            
+            // 避免重复显示，如 "北京市, 北京市"
+            if (region === city) {
+                addressElement.textContent = city;
+            } else {
+                addressElement.textContent = `${region}${city}`;
+            }
+
+            // 2. 获取天气信息 (使用 wttr.in)
+            // 这里的 city 虽然是中文，但 wttr.in 支持大部分中文城市名的查询
+            const weatherRes = await fetch(`https://wttr.in/${city}?format=%C;%t;%w&lang=zh-cn`);
+            if (weatherRes.ok) {
+                const weatherText = await weatherRes.text();
+                const parts = weatherText.split(';');
+                if (parts.length >= 3) {
+                    conditionElement.textContent = parts[0].trim();
+                    tempElement.textContent = parts[1].trim();
+                    windElement.textContent = parts[2].trim();
+                } else {
+                    throw new Error('天气格式解析失败');
+                }
+            } else {
+                throw new Error('天气接口请求失败');
+            }
+        } catch (error) {
+            console.error('获取天气/位置失败:', error);
+            addressElement.textContent = '北京市';
+            conditionElement.textContent = '多云';
+            tempElement.textContent = '16℃';
+            windElement.textContent = '东风 3级';
+        }
+    }
+
+    // 初始化
+    setInterval(updateClock, 1000);
+    updateClock();
+    updateWeather();
+    
+    // 每小时更新一次天气
+    setInterval(updateWeather, 3600000);
 });
 

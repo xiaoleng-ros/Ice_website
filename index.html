@@ -17,13 +17,15 @@
 </head>
 
 <body>
-	<div id="Iceuu-loading">
-		<div id="Iceuu-loading-center">
-		</div>
-	</div>
-	<div class="Iceuu-filter"></div>
-
-	<div class="Iceuu-main">
+    <div id="Iceuu-loading">
+        <div id="Iceuu-loading-center">
+        </div>
+    </div>
+    <div class="Iceuu-background-container">
+        <div class="Iceuu-background bg-1 active"></div>
+        <div class="Iceuu-background bg-2"></div>
+    </div>
+    <div class="Iceuu-main">
 		<div class="Iceuu-left">
 			<div class="logo" style="background-image: url(./static/img/logo.png);">
 				<!-- <img style="position: absolute;top:-15%;left:-10%;width: 120%; aspect-ratio: 1/1;"
@@ -64,6 +66,11 @@
 						<div>搭建第一个网站</div>
 						<div>2025.9</div>
 					</li>
+					<li>
+						<div class="focus"></div>
+						<div>进行页面更新</div>
+						<div>2025.12.20</div>
+					</li>
 				</ul>
 			</div>
 			<div class="left-div left-website-time">
@@ -92,55 +99,34 @@
                         </svg>
 						<div class="iconTip">Github</div>
 
-					<!-- </a><a class="iconItem" onclick="" href="mailto:i@Iceuu.net">
-						<svg t="1704870588438" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3174" >
-                            <path d="M926.47619 355.644952V780.190476a73.142857 73.142857 0 0 1-73.142857 73.142857H170.666667a73.142857 73.142857 0 0 1-73.142857-73.142857V355.644952l304.103619 257.828572a170.666667 170.666667 0 0 0 220.745142 0L926.47619 355.644952zM853.333333 170.666667a74.044952 74.044952 0 0 1 26.087619 4.778666 72.704 72.704 0 0 1 30.622477 22.186667 73.508571 73.508571 0 0 1 10.678857 17.67619c3.169524 7.509333 5.12 15.652571 5.607619 24.210286L926.47619 243.809524v24.380952L559.469714 581.241905a73.142857 73.142857 0 0 1-91.306666 2.901333l-3.632762-2.925714L97.52381 268.190476v-24.380952a72.899048 72.899048 0 0 1 40.155428-65.292191A72.97219 72.97219 0 0 1 170.666667 170.666667h682.666666z"  p-id="3175"></path>
-                        </svg>
-						<div class="iconTip">Mail</div> -->
+					</a><a class="iconItem" onclick="pop('./static/img/qq.jpg')" href="javascript:void(0)">
+						<svg t="1712319361023" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1861" ><path d="M824.8 613.2c-16-51.4-34.4-94.6-62.7-165.3C766.5 262.2 689.3 112 511.5 112 331.7 112 256.2 265.2 261 447.9c-28.4 70.8-46.7 113.7-62.7 165.3-34 109.5-23 154.8-14.6 155.8 18 2.2 70.1-82.4 70.1-82.4 0 49 25.2 112.9 79.8 159-26.4 8.1-85.7 29.9-71.6 53.8 11.4 19.3 196.2 12.3 249.5 6.3 53.3 6 238.1 13 249.5-6.3 14.1-23.8-45.3-45.7-71.6-53.8 54.6-46.2 79.8-110.1 79.8-159 0 0 52.1 84.6 70.1 82.4 8.5-1.1 19.5-46.4-14.5-155.8z" p-id="1862"></path></svg>
+						<div class="iconTip">QQ</div>	
 
 					</a><a class="iconItem" onclick="pop('./static/img/wechat.jpg')" href="javascript:void(0)">
-						<svg t="1712319361023" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1861" ><path d="M824.8 613.2c-16-51.4-34.4-94.6-62.7-165.3C766.5 262.2 689.3 112 511.5 112 331.7 112 256.2 265.2 261 447.9c-28.4 70.8-46.7 113.7-62.7 165.3-34 109.5-23 154.8-14.6 155.8 18 2.2 70.1-82.4 70.1-82.4 0 49 25.2 112.9 79.8 159-26.4 8.1-85.7 29.9-71.6 53.8 11.4 19.3 196.2 12.3 249.5 6.3 53.3 6 238.1 13 249.5-6.3 14.1-23.8-45.3-45.7-71.6-53.8 54.6-46.2 79.8-110.1 79.8-159 0 0 52.1 84.6 70.1 82.4 8.5-1.1 19.5-46.4-14.5-155.8z" p-id="1862"></path></svg>
+						<svg t="1712319361023" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1861" ><path d="M777.4 474c14.7 0 29.3 1.4 43.6 4-26.7-125.4-140.4-220.8-276.1-220.8-156.5 0-283.4 123.7-283.4 276.2 0 84.6 39.1 160.2 100.8 211.1l-25.6 77 90.1-45.1c36.5 10.1 75.4 15.7 115.5 15.7 12.5 0 24.8-0.6 36.8-1.7-5.7-17.5-8.7-36.1-8.7-55.4 0-106.7 87.8-193.2 196-193.2 2.4 0 4.7 0 7 0.2z m-227.8-48.9c-14.7 0-26.7-12-26.7-26.7s12-26.7 26.7-26.7 26.7 12 26.7 26.7-12 26.7-26.7 26.7z m-160.5 0c-14.7 0-26.7-12-26.7-26.7s12-26.7 26.7-26.7 26.7 12 26.7 26.7-12 26.7-26.7 26.7zM860 673.8c0-108.6-90.6-196.6-202.2-196.6-111.6 0-202.2 88-202.2 196.6 0 108.6 90.6 196.6 202.2 196.6 28.5 0 56-5.8 81.1-16.4l64.2 32.1-18.3-54.8c46.3-36.2 75.2-90.2 75.2-150.3v-7.2z m-265.1-24.5c-10.5 0-19-8.5-19-19s8.5-19 19-19 19 8.5 19 19-8.5 19-19 19z m152.5 0c-10.5 0-19-8.5-19-19s8.5-19 19-19 19 8.5 19 19-8.5 19-19 19z" p-id="1862"></path></svg>
 						<div class="iconTip">wechat</div>
-				
-					<!-- </a><a class="iconItem" onclick="pop('./static/img/wxzsm.jpg')" href="javascript:void(0)">
-						<svg t="1705247464964" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4987" >
-                            <path d="M995.575172 725.451034c-12.358621-26.835862-38.488276-64.794483-92.689655-94.27862-62.146207-33.721379-136.297931-40.96-208.860689-20.303448l-99.928276 28.424827-279.304828-126.057931H22.775172v489.401379h509.704828l432.375172-195.266207c15.006897-6.708966 26.835862-19.42069 32.662069-34.957241 5.649655-15.36 4.943448-31.955862-1.942069-46.962759z m-482.162758 188.910345H111.051034V601.688276h184.673104l166.664828 75.387586-3.354483 0.882759h-170.372414v88.275862H471.393103l246.819311-70.267586c49.434483-14.124138 101.517241-9.357241 142.653793 12.888275 18.184828 9.886897 30.72 20.833103 39.371034 30.896552l-386.824827 174.609655z"  p-id="4988"></path>
-                            <path d="M695.437241 163.486897l58.615173-142.30069h-397.24138l66.736552 143.36c-121.82069 53.142069-207.095172 174.433103-207.095172 315.674483 0 28.601379 3.531034 57.202759 10.593103 84.744827l85.627586-21.715862c-5.12-20.48-7.768276-41.666207-7.768275-63.028965 0-141.241379 114.758621-256 256-256s256 114.758621 256 256c0 51.023448-14.830345 100.104828-43.078621 142.300689l73.268965 49.08138c37.958621-56.673103 58.085517-122.88 58.085518-191.382069-0.176552-141.947586-86.686897-264.121379-209.743449-316.733793zM467.508966 91.983448h180.965517l-21.009655 50.846897a348.16 348.16 0 0 0-66.913104-6.708966c-23.834483 0-46.962759 2.471724-69.384827 7.062069l-23.657931-51.2z"  p-id="4989"></path>
-                            <path d="M683.431724 427.431724v-70.62069h-38.311724l30.190345-30.190344-49.964138-49.964138-62.49931 62.49931h-6.002759L494.344828 276.656552l-49.787587 49.964138 30.013793 30.190344h-38.311724v70.62069h88.275862v35.310345h-88.275862v70.62069h88.275862v52.965517h70.62069v-52.965517h88.275862v-70.62069h-88.275862v-35.310345z"  p-id="4990"></path>
-                        </svg>
-						<div class="iconTip">赞助</div> -->
 
-					</a><a class="switch" href="javascript:void(0)">
-						<div class="onoffswitch">
-							<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch"
-								checked>
-							<label class="onoffswitch-label" for="myonoffswitch">
-								<span class="onoffswitch-inner"></span>
-								<span class="onoffswitch-switch"></span>
-							</label>
-						</div>
 					</a>
 				</div>
 
 				<div class="tanChiShe">
-					<img id="tanChiShe" src="./static/svg/snake-Light.svg" alt="">
+					<img id="tanChiShe" src="./static/svg/snake-Dark.svg" alt="">
 				</div>
 			</header>
-
 
 			<content>
 				<div class="title"><svg t="1705257422086" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1891" >
                         <path d="M629.333333 202.666667v213.333333h277.333334v448h-512v-213.333333h-277.333334v-448h512z m213.333334 277.333333h-213.333334v170.666667h-170.666666v149.333333h384v-320z m-277.333334-213.333333h-384v320h213.333334v-170.666667h170.666666v-149.333333z m0 213.333333h-106.666666v106.666667h106.666666v-106.666667z"  p-id="1892"></path>
                     </svg>site </div>
-				<div class="projectList"><a class="projectItem a" target="_blank" href="https://blog.Iceuu.net">
-						<div class="projectItemLeft">
-							<h1>博客</h1>
-							<p>记录摆烂日常</p>
+				<div class="projectList"><a class="projectItem a" target="_blank" href="https://thrive-x-blog-alpha.vercel.app/">
+						<div class="projectItemLeft" style="width: 100%; display: flex; align-items: center; justify-content: center;">
+							<svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" style="width: 26px; height: 26px; fill: var(--fill); margin-right: 10px;">
+								<path d="M732.16 350.72c-15.36-112.64-112.64-204.8-220.16-204.8-94.72 0-176.64 69.12-209.92 158.72-10.24-2.56-20.48-5.12-30.72-5.12-84.48 0-153.6 69.12-153.6 153.6 0 15.36 2.56 30.72 7.68 43.52-53.76 43.52-87.04 107.52-87.04 179.2 0 128 104.96 230.4 230.4 230.4h422.4c122.88 0 220.16-97.28 220.16-220.16 0-104.96-74.24-192-179.2-215.04z"></path>
+							</svg>
+							<h1 style="margin: 0; font-size: 20px;">博客</h1>
 						</div>
-						<div class="projectItemRight">
-							<img src="./static/img/i1.png" alt="">
-						</div>
-					</a></a>
+					</a>
 				</div>
 			
 				<div class="title">
@@ -174,6 +160,32 @@
 					<div class="progress-bar" id="progress-bar"></div>
 				</div>
 			</div>
+
+			<div id="weather-clock-widget">
+				<div class="widget-time-container">
+					<div class="widget-time" id="widget-time">00:00:00</div>
+					<div class="widget-date" id="widget-date">2025 年 12 月 20 日</div>
+				</div>
+				<div class="widget-weather-details">
+					<div class="weather-item">
+						<span class="label">地址</span>
+						<span id="weather-address">正在定位...</span>
+					</div>
+					<div class="weather-item">
+						<span class="label">天气</span>
+						<span id="weather-condition">加载中...</span>
+					</div>
+					<div class="weather-item">
+						<span class="label">温度</span>
+						<span id="weather-temp">--</span>
+					</div>
+					<div class="weather-item">
+						<span class="label">风力</span>
+						<span id="weather-wind">--</span>
+					</div>
+				</div>
+			</div>
+
 			<div id="lyrics-container">
 				<p id="lyrics-display"></p>
 			</div>
