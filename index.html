@@ -22,8 +22,7 @@
         </div>
     </div>
     <div class="Iceuu-background-container">
-        <div class="Iceuu-background bg-1 active"></div>
-        <div class="Iceuu-background bg-2"></div>
+        <canvas id="particle-canvas"></canvas>
     </div>
     <div class="Iceuu-main">
 		<div class="Iceuu-left">
@@ -68,8 +67,28 @@
 					</li>
 					<li>
 						<div class="focus"></div>
-						<div>进行页面更新</div>
+						<div>页面UI更新</div>
 						<div>2025.12.20</div>
+					</li>
+					<li>
+						<div class="focus"></div>
+						<div>暗黑科技风格改造</div>
+						<div>2026.3.20</div>
+					</li>
+					<li>
+						<div class="focus"></div>
+						<div>粒子动画背景系统</div>
+						<div>2026.3.20</div>
+					</li>
+					<li>
+						<div class="focus"></div>
+						<div>音乐播放器重构</div>
+						<div>2026.3.20</div>
+					</li>
+					<li>
+						<div class="focus"></div>
+						<div>GPS定位天气功能</div>
+						<div>2026.3.20</div>
 					</li>
 				</ul>
 			</div>
@@ -93,7 +112,7 @@
 					but what we might have been capable of.
 				</div>
 				<div class="iconContainer">
-					<a class="iconItem" onclick="" href="https://github.com/xiaoleng-ros">
+					<a class="iconItem" href="https://github.com/xiaoleng-ros" target="_blank" rel="noopener noreferrer">
 						<svg t="1704870335945" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2487">
                             <path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9 23.5 23.2 38.1 55.4 38.1 91v112.5c0.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"  p-id="2488"></path>
                         </svg>
@@ -127,6 +146,12 @@
 							<h1 style="margin: 0; font-size: 20px;">博客</h1>
 						</div>
 					</a>
+					<a class="projectItem a" target="_blank" href="https://space.bilibili.com/1459419286">
+						<div class="projectItemLeft" style="width: 100%; display: flex; align-items: center; justify-content: center;">
+							<img src="https://www.bilibili.com/favicon.ico" alt="bilibili" style="width: 26px; height: 26px; margin-right: 10px;">
+							<h1 style="margin: 0; font-size: 20px;">Bilibili</h1>
+						</div>
+					</a>
 				</div>
 			
 				<div class="title">
@@ -143,8 +168,9 @@
 			<div id="music-player">
 				<div class="record-player">
 					<div class="record"></div>
+					<div class="record-groove"></div>
 					<img src="./static/img/music.png" alt="Album Art" class="album-art">
-
+					<div class="record-center"></div>
 					<button id="play-pause-btn">
                         <svg id="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
@@ -153,11 +179,55 @@
                             <path d="M6 19H10V5H6V19ZM14 5H18V19H14V5Z" fill="currentColor"/>
                         </svg>
                     </button>
+                    <div class="visualizer">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
 				</div>
-				<div class="controls">
+				<div class="song-info">
+					<div class="song-title">我好像在哪见过你</div>
+					<div class="song-artist">薛之谦</div>
 				</div>
 				<div class="progress-bar-container" id="progress-bar-container">
 					<div class="progress-bar" id="progress-bar"></div>
+					<div class="progress-handle"></div>
+				</div>
+				<div class="time-display">
+					<span id="current-time">0:00</span>
+					<span id="total-time">0:00</span>
+				</div>
+				<div class="controls">
+					<button class="control-btn" id="prev-btn">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+							<path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z" fill="currentColor"/>
+						</svg>
+					</button>
+					<button class="control-btn" id="play-btn">
+						<svg id="play-icon-small" width="20" height="20" viewBox="0 0 24 24" fill="none">
+							<path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+						</svg>
+						<svg id="pause-icon-small" width="20" height="20" viewBox="0 0 24 24" fill="none" style="display: none;">
+							<path d="M6 19H10V5H6V19ZM14 5H18V19H14V5Z" fill="currentColor"/>
+						</svg>
+					</button>
+					<button class="control-btn" id="next-btn">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+							<path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/>
+						</svg>
+					</button>
+				</div>
+				<div class="volume-control">
+					<button class="control-btn" id="volume-btn">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+							<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="currentColor"/>
+						</svg>
+					</button>
+					<div class="volume-slider">
+						<input type="range" id="volume-range" min="0" max="100" value="80">
+					</div>
 				</div>
 			</div>
 
