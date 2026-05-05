@@ -2,6 +2,8 @@
     --main_bg_color: var(--bg-dark);
     --main_text_color: #e0e0e0;
     --gradient: linear-gradient(120deg, #00d4ff, #7b2cbf 30%, #00ff88 60%, #ff006e 100%);
+    --gradient-cyber: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 50%, #ff006e 100%);
+    --gradient-neon: linear-gradient(90deg, #00d4ff, #00ff88, #ff006e, #7b2cbf);
     --purple_text_color: #7b2cbf;
     --text_bg_color: rgba(10, 10, 15, 0.8);
     --item_bg_color: rgba(20, 20, 30, 0.7);
@@ -15,7 +17,7 @@
     --back_filter_color: transparent;
     --fill: #00d4ff;
     
-    /* 暗黑科技风格增强 */
+    /* 赛博朋克科技风格增强 */
     --neon-glow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.2);
     --neon-glow-purple: 0 0 10px rgba(123, 44, 191, 0.5), 0 0 20px rgba(123, 44, 191, 0.3), 0 0 30px rgba(123, 44, 191, 0.2);
     --neon-glow-green: 0 0 10px rgba(0, 255, 136, 0.5), 0 0 20px rgba(0, 255, 136, 0.3), 0 0 30px rgba(0, 255, 136, 0.2);
@@ -24,7 +26,7 @@
     --neon-border-hover: 1px solid rgba(0, 212, 255, 0.6);
     --neon-gradient: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
     
-    /* 暗黑科技色彩 */
+    /* 赛博朋克色彩 */
     --primary-cyan: #00d4ff;
     --primary-purple: #7b2cbf;
     --primary-green: #00ff88;
@@ -38,4 +40,30 @@
     --border-card-hover: rgba(0, 212, 255, 0.4);
     --bg-dark: #0a0a0f;
     --bg-darker: #050508;
+    
+    /* 新增赛博朋克变量 */
+    --cyber-grid: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 49px,
+        rgba(0, 212, 255, 0.03) 49px,
+        rgba(0, 212, 255, 0.03) 50px
+    ),
+    repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 49px,
+        rgba(0, 212, 255, 0.03) 49px,
+        rgba(0, 212, 255, 0.03) 50px
+    );
+    --scan-line: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 212, 255, 0.02) 50%,
+        transparent 100%
+    );
+    --glass-effect: blur(20px) saturate(180%);
+    --shadow-cyber: 0 8px 32px rgba(0, 0, 0, 0.5), 
+                    0 0 1px rgba(0, 212, 255, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }

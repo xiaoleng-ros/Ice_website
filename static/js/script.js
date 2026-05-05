@@ -97,6 +97,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.speedY = (Math.random() - 0.5) * 0.5;
                 this.opacity = Math.random() * 0.5 + 0.2;
                 this.hue = Math.random() * 60 + 180; // 蓝色到青色范围
+                this.life = Math.random() * 100 + 100; // 粒子生命周期
+                this.maxLife = this.life;
             }
 
             update() {
@@ -113,6 +115,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     this.y -= dy * force * 0.02;
                 }
 
+                // 生命周期减少
+                this.life--;
+                if (this.life <= 0) {
+                    this.reset();
+                }
+
                 // 边界检查
                 if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
                     this.reset();
@@ -120,10 +128,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             draw() {
+                // 根据生命周期调整透明度
+                const lifeRatio = this.life / this.maxLife;
+                const currentOpacity = this.opacity * lifeRatio;
+                
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${this.opacity})`;
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${currentOpacity})`;
                 ctx.fill();
+                
+                // 添加发光效果
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${currentOpacity * 0.5})`;
             }
         }
 
@@ -146,10 +162,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     const distance = Math.sqrt(dx * dx + dy * dy);
 
                     if (distance < 120) {
+                        const lifeRatioI = particles[i].life / particles[i].maxLife;
+                        const lifeRatioJ = particles[j].life / particles[j].maxLife;
+                        const avgLifeRatio = (lifeRatioI + lifeRatioJ) / 2;
+                        
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        const opacity = (1 - distance / 120) * 0.15;
+                        const opacity = (1 - distance / 120) * 0.15 * avgLifeRatio;
                         ctx.strokeStyle = `rgba(0, 212, 255, ${opacity})`;
                         ctx.lineWidth = 0.5;
                         ctx.stroke();
@@ -613,22 +633,216 @@ document.addEventListener('DOMContentLoaded', function () {
             let city = '';
             let address = '';
 
-            // 1. 尝试使用浏览器 GPS 定位
+            // 1. 优先使用 IP 定位（自动获取电脑所在地，无需用户授权）
+            console.log('尝试 IP 定位...');
+            const ipLocation = await getIPLocation();
+            
+            if (ipLocation && ipLocation.city) {
+                city = ipLocation.city;
+                address = ipLocation.address || city;
+                console.log('IP 定位成功:', address);
+            } else {
+                throw new Error('IP 定位失败');
+            }
+
+            addressElement.textContent = address;
+
+            // 2. 获取天气信息
+            await fetchWeather(city);
+
+        } catch (error) {
+            console.error('IP 定位失败:', error);
+            
+            // IP 定位失败时，尝试 GPS 定位
+            console.log('尝试 GPS 定位作为备用方案...');
+            await updateWeatherByGPS();
+        }
+    }
+
+    // IP 定位（自动获取电脑所在地）
+    async function getIPLocation() {
+        // 方案1: ip-api.com（最稳定，支持中文）
+        try {
+            const locRes = await fetch('http://ip-api.com/json/?lang=zh-CN');
+            if (locRes.ok) {
+                const data = await locRes.json();
+                if (data.status === 'success' && data.city) {
+                    console.log('ip-api.com 定位成功');
+                    const city = translateCityToChinese(data.city);
+                    const region = translateCityToChinese(data.regionName);
+                    return {
+                        city: city,
+                        address: region && region !== city 
+                            ? `${region}${city}` 
+                            : city
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('ip-api.com 失败，尝试备用 API...');
+        }
+
+        // 方案2: ipinfo.io
+        try {
+            const locRes = await fetch('https://ipinfo.io/json');
+            if (locRes.ok) {
+                const data = await locRes.json();
+                if (data.city) {
+                    console.log('ipinfo.io 定位成功');
+                    const city = translateCityToChinese(data.city);
+                    const region = translateCityToChinese(data.region);
+                    return {
+                        city: city,
+                        address: region && region !== city 
+                            ? `${region}${city}` 
+                            : city
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('ipinfo.io 失败，尝试备用 API...');
+        }
+
+        // 方案3: ipapi.co
+        try {
+            const locRes = await fetch('https://ipapi.co/json/');
+            if (locRes.ok) {
+                const data = await locRes.json();
+                if (data.city && data.city !== 'undefined') {
+                    console.log('ipapi.co 定位成功');
+                    const city = translateCityToChinese(data.city);
+                    const region = translateCityToChinese(data.region);
+                    return {
+                        city: city,
+                        address: region && region !== city 
+                            ? `${region}${city}` 
+                            : city
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('ipapi.co 也失败了');
+        }
+
+        // 方案4: ipwho.is
+        try {
+            const locRes = await fetch('https://ipwho.is/');
+            if (locRes.ok) {
+                const data = await locRes.json();
+                if (data.city && data.success !== false) {
+                    console.log('ipwho.is 定位成功');
+                    const city = translateCityToChinese(data.city);
+                    const region = translateCityToChinese(data.region);
+                    return {
+                        city: city,
+                        address: region && region !== city 
+                            ? `${region}${city}` 
+                            : city
+                    };
+                }
+            }
+        } catch (e) {
+            console.log('ipwho.is 也失败了');
+        }
+
+        return null;
+    }
+
+    // 将英文/拼音城市名转换为中文，并过滤非城市名
+    function translateCityToChinese(cityName) {
+        if (!cityName) return '';
+        
+        // 过滤掉非城市名（区县、街道、乡镇等）
+        const nonCityKeywords = [
+            'Wenquan', '温泉', 'District', '区', 'County', '县', 
+            'Town', '镇', 'Street', '街道', 'Village', '村',
+            'Shi', '市辖区'
+        ];
+        
+        for (const keyword of nonCityKeywords) {
+            if (cityName.includes(keyword)) {
+                console.log(`过滤非城市名：${cityName}`);
+                return '';
+            }
+        }
+
+        // 常见城市英文名到中文的映射
+        const cityMap = {
+            'Beijing': '北京',
+            'Shanghai': '上海',
+            'Guangzhou': '广州',
+            'Shenzhen': '深圳',
+            'Chengdu': '成都',
+            'Hangzhou': '杭州',
+            'Wuhan': '武汉',
+            'Nanjing': '南京',
+            'Chongqing': '重庆',
+            'Tianjin': '天津',
+            'Xi an': '西安',
+            'Suzhou': '苏州',
+            'Zhengzhou': '郑州',
+            'Changsha': '长沙',
+            'Shenyang': '沈阳',
+            'Qingdao': '青岛',
+            'Dalian': '大连',
+            'Jinan': '济南',
+            'Harbin': '哈尔滨',
+            'Changchun': '长春',
+            'Kunming': '昆明',
+            'Taiyuan': '太原',
+            'Shijiazhuang': '石家庄',
+            'Nanchang': '南昌',
+            'Fuzhou': '福州',
+            'Hefei': '合肥',
+            'Nanning': '南宁',
+            'Guiyang': '贵阳',
+            'Lanzhou': '兰州',
+            'Wulumuqi': '乌鲁木齐',
+            'Fu Zhou Shi': '福州',
+            'Fujian': '福建'
+        };
+
+        // 先尝试精确匹配
+        if (cityMap[cityName]) {
+            return cityMap[cityName];
+        }
+
+        // 尝试忽略大小写匹配
+        const lowerName = cityName.toLowerCase();
+        for (const [key, value] of Object.entries(cityMap)) {
+            if (key.toLowerCase() === lowerName) {
+                return value;
+            }
+        }
+
+        // 如果没有匹配，返回原名称（可能是已经是中文）
+        return cityName;
+    }
+
+    // GPS 定位备用方案
+    async function updateWeatherByGPS() {
+        try {
+            let city = '';
+            let address = '';
+
             const position = await new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
                     reject(new Error('浏览器不支持定位'));
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    timeout: 10000,
-                    enableHighAccuracy: true
+                    timeout: 8000,
+                    maximumAge: 300000,
+                    enableHighAccuracy: false
                 });
             });
 
             const { latitude, longitude } = position.coords;
 
-            // 2. 通过经纬度反向地理编码获取城市名
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh-CN`);
+            // 通过经纬度反向地理编码获取城市名
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh-CN`, {
+                headers: { 'User-Agent': 'Iceuu-Website/1.0' }
+            });
             const geoData = await geoRes.json();
 
             if (geoData.address) {
@@ -642,72 +856,112 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             addressElement.textContent = address || city;
-
-            // 3. 获取天气信息
-            const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C;%t;%w&lang=zh-cn`);
-            if (weatherRes.ok) {
-                const weatherText = await weatherRes.text();
-                const parts = weatherText.split(';');
-                if (parts.length >= 3) {
-                    conditionElement.textContent = parts[0].trim();
-                    tempElement.textContent = parts[1].trim();
-                    windElement.textContent = parts[2].trim();
-                } else {
-                    throw new Error('天气格式解析失败');
-                }
-            } else {
-                throw new Error('天气接口请求失败');
-            }
+            await fetchWeather(city);
 
         } catch (error) {
-            console.error('获取天气/位置失败:', error);
-            
-            // GPS 定位失败时，回退到 IP 定位
-            if (error.code === 1 || error.message.includes('定位')) {
-                console.log('GPS 定位失败，尝试 IP 定位...');
-                await updateWeatherByIP();
-            } else {
-                // 显示默认值
-                addressElement.textContent = '定位失败';
-                conditionElement.textContent = '多云';
-                tempElement.textContent = '16℃';
-                windElement.textContent = '东风 3级';
-            }
-        }
-    }
-
-    // IP 定位备用方案
-    async function updateWeatherByIP() {
-        try {
-            const locRes = await fetch('http://ip-api.com/json/?lang=zh-CN');
-            const locData = await locRes.json();
-
-            let city = locData.city || '北京';
-            let region = locData.regionName || '';
-
-            if (region === city) {
-                addressElement.textContent = city;
-            } else {
-                addressElement.textContent = `${region}${city}`;
-            }
-
-            const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C;%t;%w&lang=zh-cn`);
-            if (weatherRes.ok) {
-                const weatherText = await weatherRes.text();
-                const parts = weatherText.split(';');
-                if (parts.length >= 3) {
-                    conditionElement.textContent = parts[0].trim();
-                    tempElement.textContent = parts[1].trim();
-                    windElement.textContent = parts[2].trim();
-                }
-            }
-        } catch (error) {
-            console.error('IP 定位也失败了:', error);
+            console.error('GPS 定位也失败了:', error);
+            // 最终回退到默认值
             addressElement.textContent = '北京市';
             conditionElement.textContent = '多云';
             tempElement.textContent = '16℃';
             windElement.textContent = '东风 3级';
         }
+    }
+
+    // 获取天气信息
+    async function fetchWeather(city) {
+        try {
+            // 方案1: wttr.in
+            try {
+                const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C;%t;%w&lang=zh-cn`, {
+                    headers: { 'User-Agent': 'curl' }
+                });
+                if (weatherRes.ok) {
+                    const weatherText = await weatherRes.text();
+                    
+                    // 检查是否返回了 HTML（说明 API 异常）
+                    if (!weatherText.includes('<!DOCTYPE') && !weatherText.includes('<html') && weatherText.includes(';')) {
+                        const parts = weatherText.split(';');
+                        if (parts.length >= 3) {
+                            conditionElement.textContent = parts[0].trim();
+                            tempElement.textContent = parts[1].trim();
+                            windElement.textContent = parts[2].trim();
+                            console.log('wttr.in 天气获取成功');
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('wttr.in 失败，尝试备用天气 API...');
+            }
+
+            // 方案2: open-meteo (免费，无需 API key)
+            try {
+                // 先获取城市经纬度
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`);
+                const geoData = await geoRes.json();
+                
+                if (geoData.results && geoData.results.length > 0) {
+                    const { latitude, longitude, name } = geoData.results[0];
+                    
+                    // 获取天气数据
+                    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`);
+                    const weatherData = await weatherRes.json();
+                    
+                    if (weatherData.current) {
+                        const current = weatherData.current;
+                        const temp = `${Math.round(current.temperature_2m)}℃`;
+                        const wind = `风速 ${current.wind_speed_10m}km/h`;
+                        
+                        // 天气代码转换为中文描述
+                        const weatherDesc = getWeatherDescription(current.weather_code);
+                        
+                        conditionElement.textContent = weatherDesc;
+                        tempElement.textContent = temp;
+                        windElement.textContent = wind;
+                        console.log('open-meteo 天气获取成功');
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('open-meteo 也失败了');
+            }
+
+            // 所有方案都失败
+            throw new Error('所有天气 API 都失败了');
+            
+        } catch (error) {
+            console.error('获取天气失败:', error);
+            // 天气获取失败不影响地址显示
+            conditionElement.textContent = '--';
+            tempElement.textContent = '--';
+            windElement.textContent = '--';
+        }
+    }
+
+    // 天气代码转换为中文描述
+    function getWeatherDescription(code) {
+        const weatherMap = {
+            0: '晴天',
+            1: '多云',
+            2: '阴天',
+            3: '阴天',
+            45: '雾',
+            48: '雾凇',
+            51: '毛毛雨',
+            53: '中雨',
+            55: '大雨',
+            61: '小雨',
+            63: '中雨',
+            65: '大雨',
+            71: '小雪',
+            73: '中雪',
+            75: '大雪',
+            95: '雷暴',
+            96: '雷暴伴冰雹',
+            99: '强雷暴'
+        };
+        return weatherMap[code] || '多云';
     }
 
     // 初始化
@@ -766,29 +1020,354 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// 添加鼠标跟踪光效（可选，性能敏感）
+// 添加滚动渐入动画
+document.addEventListener('DOMContentLoaded', function() {
+    // 为需要动画的元素添加初始状态
+    const animatedElements = document.querySelectorAll('.projectItem, .title, .skill');
+    
+    animatedElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+    });
+    
+    // 使用 Intersection Observer 检测元素是否进入视口
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    animatedElements.forEach(el => observer.observe(el));
+});
+
+// 添加赛博朋克自定义光标
+document.addEventListener('DOMContentLoaded', function() {
+    // 创建光标外圈
+    const cursorOuter = document.createElement('div');
+    cursorOuter.style.cssText = `
+        position: fixed;
+        width: 30px;
+        height: 30px;
+        border: 2px solid rgba(0, 212, 255, 0.6);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 999999;
+        transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    `;
+    document.body.appendChild(cursorOuter);
+    
+    // 创建光标内点
+    const cursorInner = document.createElement('div');
+    cursorInner.style.cssText = `
+        position: fixed;
+        width: 6px;
+        height: 6px;
+        background: rgba(0, 212, 255, 0.9);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1000000;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px rgba(0, 212, 255, 0.8);
+    `;
+    document.body.appendChild(cursorInner);
+    
+    let cursorX = 0, cursorY = 0;
+    let outerX = 0, outerY = 0;
+    
+    // 鼠标移动事件
+    document.addEventListener('mousemove', function(e) {
+        cursorX = e.clientX;
+        cursorY = e.clientY;
+        
+        // 内点直接跟随
+        cursorInner.style.left = cursorX + 'px';
+        cursorInner.style.top = cursorY + 'px';
+    });
+    
+    // 外圈平滑跟随
+    function animateCursor() {
+        outerX += (cursorX - outerX) * 0.15;
+        outerY += (cursorY - outerY) * 0.15;
+        cursorOuter.style.left = outerX + 'px';
+        cursorOuter.style.top = outerY + 'px';
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    
+    // 悬停时可交互元素时光标变化
+    const interactiveElements = document.querySelectorAll('a, button, .iconItem, .projectItem, .left-tag-item, .control-btn');
+    interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', function() {
+            cursorOuter.style.width = '45px';
+            cursorOuter.style.height = '45px';
+            cursorOuter.style.borderColor = 'rgba(0, 255, 136, 0.8)';
+            cursorOuter.style.boxShadow = '0 0 15px rgba(0, 255, 136, 0.5)';
+            cursorInner.style.background = 'rgba(0, 255, 136, 0.9)';
+            cursorInner.style.boxShadow = '0 0 12px rgba(0, 255, 136, 0.8)';
+        });
+        el.addEventListener('mouseleave', function() {
+            cursorOuter.style.width = '30px';
+            cursorOuter.style.height = '30px';
+            cursorOuter.style.borderColor = 'rgba(0, 212, 255, 0.6)';
+            cursorOuter.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.3)';
+            cursorInner.style.background = 'rgba(0, 212, 255, 0.9)';
+            cursorInner.style.boxShadow = '0 0 8px rgba(0, 212, 255, 0.8)';
+        });
+    });
+    
+    // 点击时光标收缩
+    document.addEventListener('mousedown', function() {
+        cursorOuter.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        cursorInner.style.transform = 'translate(-50%, -50%) scale(0.7)';
+    });
+    document.addEventListener('mouseup', function() {
+        cursorOuter.style.transform = 'translate(-50%, -50%) scale(1)';
+        cursorInner.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+    
+    // 鼠标离开窗口时隐藏光标
+    document.addEventListener('mouseleave', function() {
+        cursorOuter.style.opacity = '0';
+        cursorInner.style.opacity = '0';
+    });
+    document.addEventListener('mouseenter', function() {
+        cursorOuter.style.opacity = '1';
+        cursorInner.style.opacity = '1';
+    });
+});
+
+// 添加卡片3D倾斜效果
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.projectItem, .left-div');
+    
+    cards.forEach(card => {
+        card.addEventListener('mousemove', function(e) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / 10;
+            const rotateY = (centerX - x) / 10;
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.01)`;
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = '';
+        });
+    });
+});
+
+// 添加打字机效果到描述文字
+document.addEventListener('DOMContentLoaded', function() {
+    const descriptionEl = document.querySelector('.description');
+    if (!descriptionEl) return;
+    
+    // 获取原始文本
+    const originalText = descriptionEl.textContent.trim();
+    descriptionEl.textContent = '';
+    descriptionEl.style.opacity = '1';
+    
+    // 添加光标
+    const cursor = document.createElement('span');
+    cursor.style.cssText = `
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        background: rgba(0, 212, 255, 0.8);
+        margin-left: 2px;
+        animation: blink-cursor 0.8s step-end infinite;
+        vertical-align: text-bottom;
+    `;
+    descriptionEl.appendChild(cursor);
+    
+    // 添加光标闪烁动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes blink-cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // 使用 Array.from 正确处理 emoji 和特殊字符
+    const chars = Array.from(originalText);
+    let charIndex = 0;
+    const typingSpeed = 50; // 每个字符的打字速度（毫秒）
+    
+    function typeText() {
+        if (charIndex < chars.length) {
+            // 在光标前插入字符
+            const textNode = document.createTextNode(chars[charIndex]);
+            descriptionEl.insertBefore(textNode, cursor);
+            charIndex++;
+            setTimeout(typeText, typingSpeed);
+        } else {
+            // 打字完成后，3秒后移除光标
+            setTimeout(() => {
+                cursor.style.animation = 'none';
+                cursor.style.opacity = '0';
+            }, 3000);
+        }
+    }
+    
+    // 延迟开始打字，等待页面加载
+    setTimeout(typeText, 1000);
+});
+
+// 添加点击波纹效果
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        // 创建波纹元素
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+            position: fixed;
+            left: ${e.clientX}px;
+            top: ${e.clientY}px;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, rgba(123, 44, 191, 0.2) 40%, transparent 70%);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 999998;
+            animation: ripple-expand 0.6s ease-out forwards;
+        `;
+        document.body.appendChild(ripple);
+        
+        // 添加波纹动画
+        const rippleStyle = document.createElement('style');
+        if (!document.getElementById('ripple-animation-style')) {
+            rippleStyle.id = 'ripple-animation-style';
+            rippleStyle.textContent = `
+                @keyframes ripple-expand {
+                    0% {
+                        width: 0;
+                        height: 0;
+                        opacity: 1;
+                    }
+                    100% {
+                        width: 200px;
+                        height: 200px;
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(rippleStyle);
+        }
+        
+        // 动画结束后移除元素
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+});
+
+// 添加鼠标跟踪光效（赛博朋克增强版）
 document.addEventListener('DOMContentLoaded', function() {
     const main = document.querySelector('.Iceuu-main');
     if (!main) return;
     
+    // 创建主光效
     let lightEffect = document.createElement('div');
     lightEffect.style.cssText = `
         position: fixed;
-        width: 300px;
-        height: 300px;
+        width: 400px;
+        height: 400px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(137, 180, 250, 0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, rgba(123, 44, 191, 0.05) 30%, transparent 70%);
         pointer-events: none;
         z-index: 1;
-        transition: transform 0.1s ease;
+        transition: opacity 0.3s ease;
         will-change: transform;
+        filter: blur(20px);
     `;
     document.body.appendChild(lightEffect);
     
+    // 创建辅助光效（紫色）
+    let purpleLight = document.createElement('div');
+    purpleLight.style.cssText = `
+        position: fixed;
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(123, 44, 191, 0.1) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 1;
+        will-change: transform;
+        filter: blur(15px);
+        opacity: 0.7;
+    `;
+    document.body.appendChild(purpleLight);
+    
+    // 创建绿色小光点
+    let greenDot = document.createElement('div');
+    greenDot.style.cssText = `
+        position: fixed;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(0, 255, 136, 0.8);
+        pointer-events: none;
+        z-index: 9999;
+        will-change: transform;
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 0 20px rgba(0, 255, 136, 0.4);
+    `;
+    document.body.appendChild(greenDot);
+    
+    let mouseX = 0, mouseY = 0;
+    let lightX = 0, lightY = 0;
+    let purpleX = 0, purpleY = 0;
+    
     document.addEventListener('mousemove', function(e) {
-        requestAnimationFrame(function() {
-            lightEffect.style.transform = `translate(${e.clientX - 150}px, ${e.clientY - 150}px)`;
-        });
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        // 绿色光点跟随鼠标
+        greenDot.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+    });
+    
+    // 平滑动画循环
+    function animateLights() {
+        // 主光效缓慢跟随（延迟效果）
+        lightX += (mouseX - lightX) * 0.08;
+        lightY += (mouseY - lightY) * 0.08;
+        lightEffect.style.transform = `translate(${lightX - 200}px, ${lightY - 200}px)`;
+        
+        // 紫色光效更慢跟随
+        purpleX += (mouseX - purpleX) * 0.05;
+        purpleY += (mouseY - purpleY) * 0.05;
+        purpleLight.style.transform = `translate(${purpleX - 125}px, ${purpleY - 125}px)`;
+        
+        requestAnimationFrame(animateLights);
+    }
+    animateLights();
+    
+    // 鼠标离开窗口时隐藏光效
+    document.addEventListener('mouseleave', function() {
+        lightEffect.style.opacity = '0';
+        purpleLight.style.opacity = '0';
+        greenDot.style.opacity = '0';
+    });
+    
+    document.addEventListener('mouseenter', function() {
+        lightEffect.style.opacity = '1';
+        purpleLight.style.opacity = '0.7';
+        greenDot.style.opacity = '1';
     });
 });
 
