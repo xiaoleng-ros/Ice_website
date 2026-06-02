@@ -1,16 +1,32 @@
 {
-  "name": "ice_website",
-  "version": "1.0.0",
-  "description": "- 支持对图标、项目、分类、主题样式、标签、描述、左侧信息进行增删改查。  \r - 方便编辑名称、图标、点击.js事件等。  \r - 可控制贪吃蛇、侧边栏、技能的开关。  \r - 支持后台**多主题切换**，细致修改所有主题细节。",
-  "main": "index.js",
+  "name": "ice-website",
+  "version": "2.0.0",
+  "description": "Iceuu 的个人主页：暗黑科技风格展示站，集成粒子动画、智能音乐播放器、GPS 定位天气时钟。",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node scripts/convert-images.js && node scripts/convert-fonts.js && node server.js",
+    "build:assets": "node scripts/convert-images.js && node scripts/convert-fonts.js",
+    "test": "node -e \"console.log('No tests configured')\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "personal-website",
+    "cyberpunk",
+    "howler",
+    "express",
+    "static-site"
+  ],
+  "author": "Iceuu <xiaoleng-ros@users.noreply.github.com>",
+  "license": "MIT",
   "dependencies": {
+    "compression": "^1.8.1",
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "fontmin": "^1.1.1",
+    "sharp": "^0.34.5"
   }
 }

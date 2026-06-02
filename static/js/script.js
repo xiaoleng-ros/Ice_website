@@ -1,30 +1,30 @@
-console.log('%cCopyright © 2024 Iceuu.net',
-    'background-color: #ff00ff; color: white; font-size: 24px; font-weight: bold; padding: 10px;'
-);
-console.log('%c   /\\_/\\', 'color: #8B4513; font-size: 20px;');
-console.log('%c  ( o.o )', 'color: #8B4513; font-size: 20px;');
-console.log(' %c  > ^ <', 'color: #8B4513; font-size: 20px;');
-console.log('  %c /  ~ \\', 'color: #8B4513; font-size: 20px;');
-console.log('  %c/______\\', 'color: #8B4513; font-size: 20px;');
+// 减少动画偏好
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-document.addEventListener('contextmenu', function (event) {
-    event.preventDefault();
+// 切到后台时暂停所有 rAF 循环
+let isPageVisible = !document.hidden;
+document.addEventListener('visibilitychange', () => {
+    isPageVisible = !document.hidden;
 });
 
-function handlePress(event) {
+// 动态填入 footer 年份
+const yearEl = document.getElementById('footer-year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+function handlePress() {
     this.classList.add('pressed');
 }
 
-function handleRelease(event) {
+function handleRelease() {
     this.classList.remove('pressed');
 }
 
-function handleCancel(event) {
+function handleCancel() {
     this.classList.remove('pressed');
 }
 
-var buttons = document.querySelectorAll('.projectItem');
-buttons.forEach(function (button) {
+const buttons = document.querySelectorAll('.projectItem');
+buttons.forEach((button) => {
     button.addEventListener('mousedown', handlePress);
     button.addEventListener('mouseup', handleRelease);
     button.addEventListener('mouseleave', handleCancel);
@@ -34,28 +34,32 @@ buttons.forEach(function (button) {
 });
 
 function toggleClass(selector, className) {
-    var elements = document.querySelectorAll(selector);
-    elements.forEach(function (element) {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach((element) => {
         element.classList.toggle(className);
     });
 }
 
 function pop(imageURL) {
-    var tcMainElement = document.querySelector(".tc-img");
+    const tcMainElement = document.querySelector('.tc-img');
     if (imageURL) {
         tcMainElement.src = imageURL;
     }
-    toggleClass(".tc-main", "active");
-    toggleClass(".tc", "active");
+    toggleClass('.tc-main', 'active');
+    toggleClass('.tc', 'active');
 }
 
-var tc = document.getElementsByClassName('tc');
-var tc_main = document.getElementsByClassName('tc-main');
-tc[0].addEventListener('click', function (event) {
-    pop();
-});
-tc_main[0].addEventListener('click', function (event) {
-    event.stopPropagation();
+const tc = document.getElementsByClassName('tc');
+const tcMain = document.getElementsByClassName('tc-main');
+if (tc[0]) tc[0].addEventListener('click', pop);
+if (tcMain[0]) tcMain[0].addEventListener('click', (e) => e.stopPropagation());
+
+// 事件委托：所有 data-popup 的按钮共用一个 listener
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-popup]');
+    if (!btn) return;
+    e.preventDefault();
+    pop(btn.dataset.popup);
 });
 
 
@@ -180,8 +184,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 动画循环
         function animate() {
+            if (!isPageVisible || prefersReducedMotion) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             // 绘制粒子
             particles.forEach(particle => {
                 particle.update();
@@ -264,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentSongIndex = 0;
     let lyrics = [];
     let lyricsInterval;
-    let volume = 0.8;
+    let volume = 1.0;
     let playlist = [];
 
     // 从API获取音乐列表
@@ -294,10 +302,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('获取音乐列表失败:', error);
             // 使用默认音乐
             playlist = [{
-                title: '我好像在哪见过你',
-                artist: '薛之谦',
-                src: './static/music/我好像在哪见过你 - 薛之谦.mp3',
-                cover: '/static/img/music.png',
+                    title: '我好像在哪见过你',
+                    artist: '薛之谦',
+                    src: './static/music/我好像在哪见过你 - 薛之谦.mp3',
+                    cover: '/static/img/music.png',
                 lyrics: './static/music/我好像在哪见过你 - 薛之谦.lrc'
             }];
             loadSong(currentSongIndex);
@@ -316,8 +324,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const song = playlist[index];
-        recordPlayer.querySelector('img').src = song.cover;
-        
+        const imgEl = recordPlayer.querySelector('img');
+        const sourceEl = recordPlayer.querySelector('source');
+        if (imgEl) imgEl.src = song.cover;
+        if (sourceEl && song.cover) sourceEl.srcset = song.cover.replace(/\.png$/i, '.webp');
+
         // 更新歌曲信息
         if (songTitle) songTitle.textContent = song.title;
         if (songArtist) songArtist.textContent = song.artist;
@@ -628,315 +639,415 @@ document.addEventListener('DOMContentLoaded', function () {
         timeElement.textContent = `${hours}:${minutes}:${seconds}`;
     }
 
-    async function updateWeather() {
+    // localStorage 缓存相关
+    const CACHE_KEY = 'ice_weather_cache';
+    const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 小时
+    const PERMISSION_KEY = 'ice_geo_permission';
+
+    function getCachedLocation() {
         try {
-            let city = '';
-            let address = '';
-
-            // 1. 优先使用 IP 定位（自动获取电脑所在地，无需用户授权）
-            console.log('尝试 IP 定位...');
-            const ipLocation = await getIPLocation();
-            
-            if (ipLocation && ipLocation.city) {
-                city = ipLocation.city;
-                address = ipLocation.address || city;
-                console.log('IP 定位成功:', address);
-            } else {
-                throw new Error('IP 定位失败');
-            }
-
-            addressElement.textContent = address;
-
-            // 2. 获取天气信息
-            await fetchWeather(city);
-
-        } catch (error) {
-            console.error('IP 定位失败:', error);
-            
-            // IP 定位失败时，尝试 GPS 定位
-            console.log('尝试 GPS 定位作为备用方案...');
-            await updateWeatherByGPS();
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            if (!data || !data.timestamp) return null;
+            if (Date.now() - data.timestamp > CACHE_TTL) return null;
+            return data;
+        } catch (e) {
+            return null;
         }
     }
 
-    // IP 定位（自动获取电脑所在地）
-    async function getIPLocation() {
-        // 方案1: ip-api.com（最稳定，支持中文）
+    function setCachedLocation(data) {
         try {
-            const locRes = await fetch('http://ip-api.com/json/?lang=zh-CN');
-            if (locRes.ok) {
-                const data = await locRes.json();
-                if (data.status === 'success' && data.city) {
-                    console.log('ip-api.com 定位成功');
-                    const city = translateCityToChinese(data.city);
-                    const region = translateCityToChinese(data.regionName);
-                    return {
-                        city: city,
-                        address: region && region !== city 
-                            ? `${region}${city}` 
-                            : city
-                    };
-                }
-            }
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                ...data,
+                timestamp: Date.now()
+            }));
         } catch (e) {
-            console.log('ip-api.com 失败，尝试备用 API...');
+            // localStorage 可能被禁用，忽略
+        }
+    }
+
+    function clearCachedLocation() {
+        try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+    }
+
+    function getPermissionState() {
+        try { return localStorage.getItem(PERMISSION_KEY); } catch (e) { return null; }
+    }
+
+    function setPermissionState(state) {
+        try { localStorage.setItem(PERMISSION_KEY, state); } catch (e) {}
+    }
+
+    function applyWeatherToUI(address, weather) {
+        if (address) addressElement.textContent = address;
+        if (weather) {
+            if (weather.condition) conditionElement.textContent = weather.condition;
+            if (weather.temp) tempElement.textContent = weather.temp;
+            if (weather.wind) windElement.textContent = weather.wind;
+        }
+    }
+
+    function setLoadingState() {
+        addressElement.textContent = '正在定位...';
+        conditionElement.textContent = '加载中...';
+        tempElement.textContent = '--';
+        windElement.textContent = '--';
+    }
+
+    // 主入口：定位 + 天气
+    async function updateWeather(forceRefresh = false) {
+        // 1. 优先用本地缓存
+        if (!forceRefresh) {
+            const cached = getCachedLocation();
+            if (cached) {
+                applyWeatherToUI(cached.address, cached.weather);
+                console.log(`使用缓存定位 (${cached.source}):`, cached.address);
+                return;
+            }
+        } else {
+            clearCachedLocation();
         }
 
-        // 方案2: ipinfo.io
+        setLoadingState();
+
+        // 2. 尝试 GPS 浏览器定位（最准确，会弹出授权）
         try {
-            const locRes = await fetch('https://ipinfo.io/json');
-            if (locRes.ok) {
-                const data = await locRes.json();
-                if (data.city) {
-                    console.log('ipinfo.io 定位成功');
-                    const city = translateCityToChinese(data.city);
-                    const region = translateCityToChinese(data.region);
-                    return {
-                        city: city,
-                        address: region && region !== city 
-                            ? `${region}${city}` 
-                            : city
-                    };
+            const coords = await getGPSCoords();
+            if (coords) {
+                setPermissionState('granted');
+                const { latitude, longitude } = coords;
+                const coordText = `GPS 定位 (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`;
+                addressElement.textContent = coordText;
+
+                // 天气和反向地理编码并行请求
+                const [weatherResult, addressResult] = await Promise.allSettled([
+                    fetchWeatherByCoords(latitude, longitude),
+                    reverseGeocode(latitude, longitude)
+                ]);
+
+                if (weatherResult.status === 'fulfilled' && weatherResult.value) {
+                    applyWeatherToUI(null, weatherResult.value);
+                } else {
+                    conditionElement.textContent = '--';
+                    tempElement.textContent = '--';
+                    windElement.textContent = '--';
                 }
+
+                const address = (addressResult.status === 'fulfilled' && addressResult.value) ? addressResult.value : null;
+                if (address) {
+                    addressElement.textContent = address.display;
+                }
+
+                setCachedLocation({
+                    latitude,
+                    longitude,
+                    city: address ? address.city : '',
+                    address: address ? address.display : coordText,
+                    source: 'gps',
+                    weather: weatherResult.status === 'fulfilled' ? weatherResult.value : null
+                });
+                console.log('GPS 定位成功：', address ? address.display : coordText);
+                return;
             }
         } catch (e) {
-            console.log('ipinfo.io 失败，尝试备用 API...');
+            console.log('GPS 定位失败：', e.message);
         }
 
-        // 方案3: ipapi.co
+        // 3. GPS 不可用时降级到 IP 定位
         try {
-            const locRes = await fetch('https://ipapi.co/json/');
-            if (locRes.ok) {
-                const data = await locRes.json();
-                if (data.city && data.city !== 'undefined') {
-                    console.log('ipapi.co 定位成功');
-                    const city = translateCityToChinese(data.city);
-                    const region = translateCityToChinese(data.region);
-                    return {
-                        city: city,
-                        address: region && region !== city 
-                            ? `${region}${city}` 
-                            : city
-                    };
+            const ipLoc = await getIPLocation();
+            if (ipLoc && ipLoc.city) {
+                addressElement.textContent = ipLoc.address;
+                const weather = await fetchWeatherByCity(ipLoc.city);
+                if (weather) {
+                    applyWeatherToUI(null, weather);
                 }
+                setCachedLocation({
+                    address: ipLoc.address,
+                    city: ipLoc.city,
+                    source: 'ip',
+                    weather
+                });
+                console.log('IP 定位成功:', ipLoc.address);
+                return;
             }
         } catch (e) {
-            console.log('ipapi.co 也失败了');
+            console.log('IP 定位失败：', e.message);
         }
 
-        // 方案4: ipwho.is
+        // 4. 全部失败
+        addressElement.textContent = '定位失败，点击重试';
+        conditionElement.textContent = '--';
+        tempElement.textContent = '--';
+        windElement.textContent = '--';
+    }
+
+    // 带超时的 fetch 封装
+    function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(t));
+    }
+
+    // GPS 浏览器定位（主方案，只返回坐标，速度优先）
+    function getGPSCoords() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('浏览器不支持定位'));
+                return;
+            }
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                reject(new Error('非 HTTPS 环境无法使用 GPS 定位'));
+                return;
+            }
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' }).then((perm) => {
+                    if (perm.state === 'denied') {
+                        reject(new Error('用户已拒绝定位授权'));
+                    } else {
+                        requestPosition();
+                    }
+                }).catch(() => requestPosition());
+            } else {
+                requestPosition();
+            }
+
+            function requestPosition() {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    resolve({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy
+                    });
+                }, (err) => {
+                    let msg = '定位失败';
+                    if (err.code === 1) msg = '用户拒绝定位授权';
+                    else if (err.code === 2) msg = '位置不可用';
+                    else if (err.code === 3) msg = '定位超时';
+                    setPermissionState('denied');
+                    reject(new Error(msg));
+                }, {
+                    timeout: 8000,
+                    maximumAge: 60000,
+                    enableHighAccuracy: false
+                });
+            }
+        });
+    }
+
+    // 通过经纬度反向地理编码（并行尝试多个源，4s 超时）
+    async function reverseGeocode(latitude, longitude) {
+        // 优先用 BigDataCloud（免 key，国内访问稳定，~300ms）
         try {
-            const locRes = await fetch('https://ipwho.is/');
-            if (locRes.ok) {
-                const data = await locRes.json();
-                if (data.city && data.success !== false) {
-                    console.log('ipwho.is 定位成功');
-                    const city = translateCityToChinese(data.city);
-                    const region = translateCityToChinese(data.region);
-                    return {
-                        city: city,
-                        address: region && region !== city 
-                            ? `${region}${city}` 
-                            : city
-                    };
+            const res = await fetchWithTimeout(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=zh`,
+                {},
+                4000
+            );
+            if (res.ok) {
+                const d = await res.json();
+                const country = d.countryName || '';
+                const state = d.principalSubdivision || '';  // 省（已带"省/市"后缀）
+                const city  = d.city || d.locality || '';     // 市/区
+                if (city) {
+                    let display;
+                    if (country === '中国' || country === 'China' || country.includes('中国')) {
+                        display = state && state !== city ? `${state} · ${city}` : city;
+                    } else {
+                        const parts = [country, state, city].filter(Boolean);
+                        display = parts.length ? parts.join(' · ') : city;
+                    }
+                    return { city, display };
                 }
             }
         } catch (e) {
-            console.log('ipwho.is 也失败了');
+            // 继续尝试 Nominatim
         }
+
+        // 备用：Nominatim（限速 1 req/s，国内慢）
+        try {
+            const res = await fetchWithTimeout(
+                `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh-CN&zoom=10&addressdetails=1`,
+                { headers: { 'User-Agent': 'Iceuu-Website/1.0' } },
+                4000
+            );
+            if (res.ok) {
+                const d = await res.json();
+                const a = d.address || {};
+                const state = a.state || '';
+                const city  = cleanCityName(a.city || a.town || a.county || a.village || a.state || '');
+                const country = a.country || '';
+                if (city) {
+                    let display;
+                    if (country === '中国' || country === 'China') {
+                        display = state && state !== city ? `${state} · ${city}` : city;
+                    } else {
+                        const parts = [country, state, city].filter(Boolean);
+                        display = parts.length ? parts.join(' · ') : city;
+                    }
+                    return { city, display };
+                }
+            }
+        } catch (e) {}
 
         return null;
     }
 
-    // 将英文/拼音城市名转换为中文，并过滤非城市名
-    function translateCityToChinese(cityName) {
-        if (!cityName) return '';
-        
-        // 过滤掉非城市名（区县、街道、乡镇等）
-        const nonCityKeywords = [
-            'Wenquan', '温泉', 'District', '区', 'County', '县', 
-            'Town', '镇', 'Street', '街道', 'Village', '村',
-            'Shi', '市辖区'
+    // IP 定位（兜底方案，并行尝试 4 个源，取最快成功的）
+    async function getIPLocation() {
+        const sources = [
+            async () => {
+                const r = await fetch('http://ip-api.com/json/?lang=zh-CN');
+                if (!r.ok) throw new Error('ip-api http');
+                const d = await r.json();
+                if (d.status !== 'success' || !d.city) throw new Error('ip-api invalid');
+                const city = cleanCityName(d.city);
+                const region = cleanCityName(d.regionName);
+                if (!city) throw new Error('ip-api no city');
+                return { city, address: region && region !== city ? `${region} · ${city}` : city };
+            },
+            async () => {
+                const r = await fetch('https://ipwho.is/');
+                if (!r.ok) throw new Error('ipwho http');
+                const d = await r.json();
+                if (d.success === false || !d.city) throw new Error('ipwho invalid');
+                const city = cleanCityName(d.city);
+                const region = cleanCityName(d.region);
+                if (!city) throw new Error('ipwho no city');
+                return { city, address: region && region !== city ? `${region} · ${city}` : city };
+            },
+            async () => {
+                const r = await fetch('https://ipapi.co/json/');
+                if (!r.ok) throw new Error('ipapi http');
+                const d = await r.json();
+                if (!d.city || d.city === 'undefined') throw new Error('ipapi invalid');
+                const city = cleanCityName(d.city);
+                const region = cleanCityName(d.region);
+                if (!city) throw new Error('ipapi no city');
+                return { city, address: region && region !== city ? `${region} · ${city}` : city };
+            },
+            async () => {
+                const r = await fetch('https://ipinfo.io/json');
+                if (!r.ok) throw new Error('ipinfo http');
+                const d = await r.json();
+                if (!d.city) throw new Error('ipinfo invalid');
+                const city = cleanCityName(d.city);
+                const region = cleanCityName(d.region);
+                if (!city) throw new Error('ipinfo no city');
+                return { city, address: region && region !== city ? `${region} · ${city}` : city };
+            }
         ];
-        
-        for (const keyword of nonCityKeywords) {
-            if (cityName.includes(keyword)) {
-                console.log(`过滤非城市名：${cityName}`);
-                return '';
-            }
+
+        try {
+            return await Promise.any(sources.map(fn => fn().catch(e => Promise.reject(e))));
+        } catch (e) {
+            return null;
         }
-
-        // 常见城市英文名到中文的映射
-        const cityMap = {
-            'Beijing': '北京',
-            'Shanghai': '上海',
-            'Guangzhou': '广州',
-            'Shenzhen': '深圳',
-            'Chengdu': '成都',
-            'Hangzhou': '杭州',
-            'Wuhan': '武汉',
-            'Nanjing': '南京',
-            'Chongqing': '重庆',
-            'Tianjin': '天津',
-            'Xi an': '西安',
-            'Suzhou': '苏州',
-            'Zhengzhou': '郑州',
-            'Changsha': '长沙',
-            'Shenyang': '沈阳',
-            'Qingdao': '青岛',
-            'Dalian': '大连',
-            'Jinan': '济南',
-            'Harbin': '哈尔滨',
-            'Changchun': '长春',
-            'Kunming': '昆明',
-            'Taiyuan': '太原',
-            'Shijiazhuang': '石家庄',
-            'Nanchang': '南昌',
-            'Fuzhou': '福州',
-            'Hefei': '合肥',
-            'Nanning': '南宁',
-            'Guiyang': '贵阳',
-            'Lanzhou': '兰州',
-            'Wulumuqi': '乌鲁木齐',
-            'Fu Zhou Shi': '福州',
-            'Fujian': '福建'
-        };
-
-        // 先尝试精确匹配
-        if (cityMap[cityName]) {
-            return cityMap[cityName];
-        }
-
-        // 尝试忽略大小写匹配
-        const lowerName = cityName.toLowerCase();
-        for (const [key, value] of Object.entries(cityMap)) {
-            if (key.toLowerCase() === lowerName) {
-                return value;
-            }
-        }
-
-        // 如果没有匹配，返回原名称（可能是已经是中文）
-        return cityName;
     }
 
-    // GPS 定位备用方案
-    async function updateWeatherByGPS() {
+    // 拼音/英文 → 中文城市名映射（130+ 城市，从 city-pinyin.json 加载）
+    let cityPinyinMap = null;
+    async function loadCityMap() {
+        if (cityPinyinMap) return cityPinyinMap;
         try {
-            let city = '';
-            let address = '';
+            const r = await fetch('/static/data/city-pinyin.json');
+            cityPinyinMap = await r.json();
+        } catch (e) {
+            cityPinyinMap = {};
+        }
+        return cityPinyinMap;
+    }
 
-            const position = await new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error('浏览器不支持定位'));
-                    return;
+    // 同步版本（IP 定位解析时不可异步，用预加载 + 兜底）
+    function cleanCityName(name) {
+        if (!name) return '';
+        const trimmed = String(name).trim();
+        if (!trimmed) return '';
+
+        // 完整中文城市名（直接放行）
+        if (/[\u4e00-\u9fa5]/.test(trimmed)) {
+            return trimmed
+                .replace(/(市辖区|市辖|辖区)$/g, '')
+                .replace(/(区|县|镇|乡|街道|街道办|村)$/g, '')
+                .trim();
+        }
+
+        // 拼音/英文名 → 中文字典（同步使用 window.__cityPinyinMap，提前注入）
+        const map = window.__cityPinyinMap || {};
+        const lower = trimmed.toLowerCase().trim();
+        if (map[lower]) return map[lower];
+
+        const cleaned = trimmed.replace(/\s*(shi|city|prefecture|district|county)$/i, '').trim();
+        const lower2 = cleaned.toLowerCase();
+        if (map[lower2]) return map[lower2];
+
+        return cleaned;
+    }
+
+    // 提前加载城市映射表，注入到 window
+    loadCityMap().then((map) => { window.__cityPinyinMap = map; });
+
+    // 按经纬度查天气（Open-Meteo，无需先 geocoding，最准）
+    async function fetchWeatherByCoords(latitude, longitude) {
+        try {
+            const res = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`
+            );
+            if (!res.ok) throw new Error('open-meteo 请求失败');
+            const data = await res.json();
+            if (!data.current) throw new Error('open-meteo 无数据');
+            const c = data.current;
+            return {
+                condition: getWeatherDescription(c.weather_code),
+                temp: `${Math.round(c.temperature_2m)}℃`,
+                wind: `风速 ${Math.round(c.wind_speed_10m)} km/h`
+            };
+        } catch (e) {
+            console.log('open-meteo 天气获取失败：', e.message);
+            return null;
+        }
+    }
+
+    // 按城市名查天气（先 wttr.in，再 open-meteo geocoding + forecast）
+    async function fetchWeatherByCity(city) {
+        // 方案1: wttr.in（直接接受城市名）
+        try {
+            const res = await fetch(
+                `https://wttr.in/${encodeURIComponent(city)}?format=%C;%t;%w&lang=zh-cn`,
+                { headers: { 'User-Agent': 'curl' } }
+            );
+            if (res.ok) {
+                const text = await res.text();
+                if (!text.includes('<!DOCTYPE') && !text.includes('<html') && text.includes(';')) {
+                    const parts = text.split(';');
+                    if (parts.length >= 3) {
+                        return {
+                            condition: parts[0].trim(),
+                            temp: parts[1].trim(),
+                            wind: parts[2].trim()
+                        };
+                    }
                 }
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    timeout: 8000,
-                    maximumAge: 300000,
-                    enableHighAccuracy: false
-                });
-            });
+            }
+        } catch (e) {}
 
-            const { latitude, longitude } = position.coords;
-
-            // 通过经纬度反向地理编码获取城市名
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=zh-CN`, {
-                headers: { 'User-Agent': 'Iceuu-Website/1.0' }
-            });
+        // 方案2: open-meteo geocoding + forecast
+        try {
+            const geoRes = await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`
+            );
             const geoData = await geoRes.json();
-
-            if (geoData.address) {
-                city = geoData.address.city || geoData.address.town || geoData.address.county || '';
-                const province = geoData.address.state || '';
-                address = province && city !== province ? `${province}${city}` : city;
+            if (geoData.results && geoData.results.length > 0) {
+                const { latitude, longitude } = geoData.results[0];
+                return await fetchWeatherByCoords(latitude, longitude);
             }
+        } catch (e) {}
 
-            if (!city) {
-                throw new Error('无法解析城市名');
-            }
-
-            addressElement.textContent = address || city;
-            await fetchWeather(city);
-
-        } catch (error) {
-            console.error('GPS 定位也失败了:', error);
-            // 最终回退到默认值
-            addressElement.textContent = '北京市';
-            conditionElement.textContent = '多云';
-            tempElement.textContent = '16℃';
-            windElement.textContent = '东风 3级';
-        }
-    }
-
-    // 获取天气信息
-    async function fetchWeather(city) {
-        try {
-            // 方案1: wttr.in
-            try {
-                const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=%C;%t;%w&lang=zh-cn`, {
-                    headers: { 'User-Agent': 'curl' }
-                });
-                if (weatherRes.ok) {
-                    const weatherText = await weatherRes.text();
-                    
-                    // 检查是否返回了 HTML（说明 API 异常）
-                    if (!weatherText.includes('<!DOCTYPE') && !weatherText.includes('<html') && weatherText.includes(';')) {
-                        const parts = weatherText.split(';');
-                        if (parts.length >= 3) {
-                            conditionElement.textContent = parts[0].trim();
-                            tempElement.textContent = parts[1].trim();
-                            windElement.textContent = parts[2].trim();
-                            console.log('wttr.in 天气获取成功');
-                            return;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('wttr.in 失败，尝试备用天气 API...');
-            }
-
-            // 方案2: open-meteo (免费，无需 API key)
-            try {
-                // 先获取城市经纬度
-                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`);
-                const geoData = await geoRes.json();
-                
-                if (geoData.results && geoData.results.length > 0) {
-                    const { latitude, longitude, name } = geoData.results[0];
-                    
-                    // 获取天气数据
-                    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`);
-                    const weatherData = await weatherRes.json();
-                    
-                    if (weatherData.current) {
-                        const current = weatherData.current;
-                        const temp = `${Math.round(current.temperature_2m)}℃`;
-                        const wind = `风速 ${current.wind_speed_10m}km/h`;
-                        
-                        // 天气代码转换为中文描述
-                        const weatherDesc = getWeatherDescription(current.weather_code);
-                        
-                        conditionElement.textContent = weatherDesc;
-                        tempElement.textContent = temp;
-                        windElement.textContent = wind;
-                        console.log('open-meteo 天气获取成功');
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.log('open-meteo 也失败了');
-            }
-
-            // 所有方案都失败
-            throw new Error('所有天气 API 都失败了');
-            
-        } catch (error) {
-            console.error('获取天气失败:', error);
-            // 天气获取失败不影响地址显示
-            conditionElement.textContent = '--';
-            tempElement.textContent = '--';
-            windElement.textContent = '--';
-        }
+        return null;
     }
 
     // 天气代码转换为中文描述
@@ -964,11 +1075,28 @@ document.addEventListener('DOMContentLoaded', function () {
         return weatherMap[code] || '多云';
     }
 
+    // 暴露给 UI 按钮的重新定位方法
+    window.refreshWeatherLocation = function () {
+        return updateWeather(true);
+    };
+
+    // 绑定重新定位按钮（如果存在）
+    const refreshBtn = document.getElementById('weather-refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            this.classList.add('spinning');
+            updateWeather(true).finally(() => {
+                setTimeout(() => this.classList.remove('spinning'), 600);
+            });
+        });
+    }
+
     // 初始化
     setInterval(updateClock, 1000);
     updateClock();
     updateWeather();
-    
+
     // 每小时更新一次天气
     setInterval(updateWeather, 3600000);
 });
@@ -1096,10 +1224,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 外圈平滑跟随
     function animateCursor() {
-        outerX += (cursorX - outerX) * 0.15;
-        outerY += (cursorY - outerY) * 0.15;
-        cursorOuter.style.left = outerX + 'px';
-        cursorOuter.style.top = outerY + 'px';
+        if (isPageVisible && !prefersReducedMotion) {
+            outerX += (cursorX - outerX) * 0.15;
+            outerY += (cursorY - outerY) * 0.15;
+            cursorOuter.style.left = outerX + 'px';
+            cursorOuter.style.top = outerY + 'px';
+        }
         requestAnimationFrame(animateCursor);
     }
     animateCursor();
@@ -1229,53 +1359,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(typeText, 1000);
 });
 
-// 添加点击波纹效果
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-        // 创建波纹元素
-        const ripple = document.createElement('div');
-        ripple.style.cssText = `
-            position: fixed;
-            left: ${e.clientX}px;
-            top: ${e.clientY}px;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, rgba(123, 44, 191, 0.2) 40%, transparent 70%);
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 999998;
-            animation: ripple-expand 0.6s ease-out forwards;
-        `;
-        document.body.appendChild(ripple);
-        
-        // 添加波纹动画
-        const rippleStyle = document.createElement('style');
-        if (!document.getElementById('ripple-animation-style')) {
-            rippleStyle.id = 'ripple-animation-style';
-            rippleStyle.textContent = `
-                @keyframes ripple-expand {
-                    0% {
-                        width: 0;
-                        height: 0;
-                        opacity: 1;
-                    }
-                    100% {
-                        width: 200px;
-                        height: 200px;
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(rippleStyle);
-        }
-        
-        // 动画结束后移除元素
-        setTimeout(() => {
-            ripple.remove();
-        }, 600);
-    });
-});
+// 全局点击波纹已由 createRipple 统一处理（见上），此处不再重复添加
 
 // 添加鼠标跟踪光效（赛博朋克增强版）
 document.addEventListener('DOMContentLoaded', function() {
@@ -1343,16 +1427,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 平滑动画循环
     function animateLights() {
-        // 主光效缓慢跟随（延迟效果）
-        lightX += (mouseX - lightX) * 0.08;
-        lightY += (mouseY - lightY) * 0.08;
-        lightEffect.style.transform = `translate(${lightX - 200}px, ${lightY - 200}px)`;
-        
-        // 紫色光效更慢跟随
-        purpleX += (mouseX - purpleX) * 0.05;
-        purpleY += (mouseY - purpleY) * 0.05;
-        purpleLight.style.transform = `translate(${purpleX - 125}px, ${purpleY - 125}px)`;
-        
+        if (isPageVisible && !prefersReducedMotion) {
+            // 主光效缓慢跟随（延迟效果）
+            lightX += (mouseX - lightX) * 0.08;
+            lightY += (mouseY - lightY) * 0.08;
+            lightEffect.style.transform = `translate(${lightX - 200}px, ${lightY - 200}px)`;
+
+            // 紫色光效更慢跟随
+            purpleX += (mouseX - purpleX) * 0.05;
+            purpleY += (mouseY - purpleY) * 0.05;
+            purpleLight.style.transform = `translate(${purpleX - 125}px, ${purpleY - 125}px)`;
+        }
         requestAnimationFrame(animateLights);
     }
     animateLights();

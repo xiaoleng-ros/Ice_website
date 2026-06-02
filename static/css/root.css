@@ -63,7 +63,18 @@
         transparent 100%
     );
     --glass-effect: blur(20px) saturate(180%);
-    --shadow-cyber: 0 8px 32px rgba(0, 0, 0, 0.5), 
+    -webkit-backdrop-filter: var(--glass-effect);
+    --shadow-cyber: 0 8px 32px rgba(0, 0, 0, 0.5),
                     0 0 1px rgba(0, 212, 255, 0.5),
                     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    /* z-index 语义化层级（避免裸数字） */
+    --z-bg: -1;
+    --z-base: 1;
+    --z-card: 10;
+    --z-fixed: 100;
+    --z-overlay: 1000;
+    --z-modal: 10000;
+    --z-tooltip: 100000;
+    --z-cursor: 999999;
 }

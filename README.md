@@ -91,11 +91,13 @@ npm install
 npm start
 ```
 
-访问 `http://localhost:3000` 即可查看。
+访问 `http://localhost:3100` 即可查看（可通过 `PORT` 环境变量自定义）。
 
 ### 添加音乐
 
 只需将 MP3 文件放入 `static/music/` 目录，系统会自动扫描并加载。
+
+> 配套歌词：将同名的 `.lrc` 文件放在同一目录即可被自动加载。LRC 须为 UTF-8 编码。
 
 **文件命名建议**：
 ```
@@ -111,13 +113,32 @@ static/music/
 
 | 内容 | 修改位置 |
 |------|----------|
-| 头像 | `static/img/logo.png` |
-| 背景 | `static/img/background/` |
-| 音乐封面 | `static/img/music.png` |
+| 头像 | `static/img/favicon.ico` |
+| 音乐封面 | `static/img/music.png`（含 `.webp` 备选） |
 | 个人信息 | `index.html` 中的 `.left-div` 区域 |
 | 站点链接 | `index.html` 中的 `.projectList` 区域 |
 | 时间线 | `index.html` 中的 `#line` 区域 |
 | 主题颜色 | `static/css/root.css` |
+| 城市名映射 | `static/data/city-pinyin.json` |
+
+---
+
+## 资源优化
+
+首次拉取后可执行 `npm run build:assets` 把图片转 WebP、字体子集化为 woff2，可节省约 70% 传输体积。
+
+---
+
+## 隐私说明
+
+天气定位功能会调用以下第三方 API（取决于 IP 定位回退链路）：
+
+- 浏览器 GPS（需用户授权）
+- [BigDataCloud](https://www.bigdatacloud.net/)、[Nominatim](https://nominatim.openstreetmap.org/) - 反向地理编码
+- [wttr.in](https://wttr.in/)、[Open-Meteo](https://open-meteo.com/) - 天气数据
+- [ip-api.com](https://ip-api.com/)、[ipwho.is](https://ipwho.is/)、[ipapi.co](https://ipapi.co/)、[ipinfo.io](https://ipinfo.io/) - IP 定位
+
+这些服务会接收到访问者的公网 IP。定位结果在浏览器本地缓存 6 小时（localStorage）。如果不需要此功能，可在 `script.js` 中注释 `updateWeather()` 调用。
 
 ---
 
@@ -136,6 +157,16 @@ static/music/
 ---
 
 ## 更新日志
+
+### v3.0.0 (2026-06-02) - 质量与无障碍全面重构
+
+- **服务端加固**：加 helmet 安全头、`compression` gzip、`/api/music` 缓存、`process.env.PORT` 支持、优雅关闭
+- **资源优化**：图片 WebP（music.png 644KB→30KB）、字体 woff2 子集化（273KB→6KB）
+- **JS 清理**：移除所有 `console.log` 调试输出、3 个 rAF 循环在 `visibilitychange` 与 `prefers-reduced-motion` 时暂停、IP 定位 4 源改 `Promise.any` 并行、点击波纹去重
+- **CSS 清理**：删除 ~150 行死代码（`.switch` `.onoffswitch*` 重复块）、修复 `i1.png` 404、修复 `user-select` 全局禁用、滚动条不再隐藏、加 `prefers-reduced-motion` 兜底、添加 z-index 语义化变量
+- **HTML 无障碍**：移除 `user-scalable=no`、加 SRI integrity、`<content>` → `<main>`、QQ/微信链接改 `<button>` + `aria-label`、图片加 `alt`、加 `og:*` `theme-color` `apple-touch-icon`、footer 年份动态化
+- **Git 卫生**：新增 `.gitignore`、删除 12MB 未引用的背景图、删除过时的 `music.md`、favicon.ico / logo.png 去重
+- **定位逻辑**：GPS 优先 + 浏览器授权；并把反向地理编码从慢的 Nominatim 切到 BigDataCloud；localStorage 6h 缓存
 
 ### v2.1.0 (2026-05-06) - 赛博朋克风格全面升级
 - **自定义光标效果**：双层光标系统（外圈+内点），悬停可交互元素时变色放大

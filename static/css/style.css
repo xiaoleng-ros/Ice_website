@@ -1,18 +1,13 @@
 @font-face {
-    font-family: "a";
-    src: url();
-    font-display: swap;
-}
-
-@font-face {
     font-family: "b";
-    src: url(../fonts/Ubuntu-Regular.ttf);
+    src: url(../fonts/Ubuntu-Regular.woff2) format('woff2'),
+         url(../fonts/Ubuntu-Regular.ttf) format('truetype');
     font-display: swap;
 }
 
 @font-face {
     font-family: "title";
-    src: url(../fonts/Pacifico-Regular.ttf);
+    src: url(../fonts/Pacifico-Regular.ttf) format('truetype');
     font-display: swap;
 }
 
@@ -27,6 +22,16 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+/* 装饰性元素禁止选中（按钮、卡片、图标） */
+button, .iconItem, .projectItem, .left-tag-item, .left-div, .left-des-item,
+.weather-item, .song-title, .song-artist, .widget-time, .widget-date,
+#weather-clock-widget, #music-player, .record-player, .tanChiShe,
+.corner-decoration, .floating-line, #lyrics-display {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
 }
 
@@ -38,14 +43,8 @@ html {
 }
 
 body {
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
     overflow-x: hidden;
     scroll-behavior: smooth;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000;
-    perspective: 1000;
 }
 
 a:hover,
@@ -60,18 +59,23 @@ a:focus {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+/* 滚动条样式：保持 8px 宽度（无障碍可达），仅深色主题配色 */
 ::-webkit-scrollbar {
-    width: 0px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: var(--main_text_color, #000000);
-    border-radius: 8px;
-    height: 20%;
+    background-color: rgba(0, 212, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 212, 255, 0.5);
 }
 
 ::-webkit-scrollbar-track {
-    background-color: var(--main_bg_color, linear-gradient(50deg, #a2d0ff, #ffffff));
+    background-color: transparent;
 }
 
 html {
@@ -744,22 +748,6 @@ body {
     border-left-color: #a6e3a1;
 }
 
-.focus {
-    width: 8px;
-    height: 8px;
-    border-radius: 22px;
-    background-color: rgb(255 255 255);
-    border: 2px solid #fff;
-    position: absolute;
-    left: -5px;
-    top: 50%;
-}
-
-#line li:first-child .focus:first-child {
-    background-color: #a6e3a1;
-    animation: focus 1.8s ease infinite;
-}
-
 #line::-webkit-scrollbar {
     display: none;
 }
@@ -972,23 +960,6 @@ body {
     margin-right: 3px;
 }
 
-.switch {
-    width: 55px;
-    height: 43px;
-    box-sizing: border-box;
-    border-radius: 10px;
-    display: flex;
-    margin-left: 10px;
-    backdrop-filter: blur(var(--card_filter));
-    -webkit-backdrop-filter: blur(var(--card_filter));
-    background: var(--item_bg_color);
-    align-items: center;
-    justify-content: center;
-    transition: width 1s ease, opacity 1s ease, transform 1s ease;
-    flex-shrink: 0;
-    border: 1px solid rgba(180, 190, 254, 0.1);
-}
-
 .iconTip {
     white-space: nowrap;
     display: none;
@@ -1004,12 +975,6 @@ body {
 
 .iconItem:hover .iconTip {
     display: block;
-}
-
-.switch:hover {
-    width: 55px;
-    background: var(--item_hover_color);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .tanChiShe {
@@ -1357,14 +1322,14 @@ footer:hover {
         width: calc(50% - 16px);
     }
     #music-player {
-        width: 180px;
+        width: 280px;
     }
     .record-player {
         width: 130px;
         height: 130px;
     }
     #weather-clock-widget {
-        width: 180px;
+        width: 280px;
         top: 380px;
     }
     
@@ -1441,20 +1406,23 @@ footer:hover {
         margin: 20px 0 10px 0;
     }
     #music-player {
-        width: 160px;
-        padding: 12px;
+        width: 260px;
+        padding: 16px;
     }
     .record-player {
         width: 120px;
         height: 120px;
     }
     #weather-clock-widget {
-        width: 160px;
-        padding: 12px;
+        width: 260px;
+        padding: 16px;
         top: 320px;
     }
     .widget-time {
-        font-size: 20px;
+        font-size: 28px;
+    }
+    .weather-item {
+        font-size: 13px;
     }
     
     /* 移动端禁用3D效果和光标 */
@@ -1474,16 +1442,23 @@ footer:hover {
         margin: 10px;
     }
     #music-player {
-        width: 140px;
-        padding: 10px;
+        width: calc(100vw - 20px);
+        max-width: 320px;
+        padding: 14px;
         top: 10px;
         right: 10px;
+        left: 10px;
     }
     #weather-clock-widget {
-        width: 140px;
-        padding: 10px;
-        top: 280px;
+        width: calc(100vw - 20px);
+        max-width: 320px;
+        padding: 14px;
+        top: 260px;
         right: 10px;
+        left: 10px;
+    }
+    .widget-time {
+        font-size: 28px;
     }
     .record-player {
         width: 100px;
@@ -1542,88 +1517,6 @@ footer:hover {
     transform: translateY(0) scale(1);
 }
 
-.onoffswitch {
-    position: relative;
-    width: 38px;
-    height: 20px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.onoffswitch-checkbox {
-    display: none;
-}
-
-.onoffswitch-label {
-    display: block;
-    overflow: hidden;
-    cursor: pointer;
-    height: 100%;
-    border-radius: 50px;
-}
-
-.onoffswitch-inner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 200%;
-    height: 100%;
-    margin-left: -100%;
-    transition: margin 0.2s ease-in 0s;
-}
-
-.onoffswitch-inner:before,
-.onoffswitch-inner:after {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    float: left;
-    width: 50%;
-    height: 100%;
-    padding: 0;
-    font-size: 12px;
-    color: white;
-    font-family: Trebuchet, Arial, sans-serif;
-    font-weight: bold;
-    box-sizing: border-box;
-}
-
-.onoffswitch-inner:before {
-    content: "";
-    background-color: rgb(110 110 110 / 50%);
-    color: #FFFFFF;
-    text-align: left;
-}
-
-.onoffswitch-inner:after {
-    content: "";
-    background-color: #272727;
-    color: #FAFAFA;
-    text-align: right;
-}
-
-.onoffswitch-switch {
-    display: block;
-    height: 70%;
-    aspect-ratio: 1/1;
-    background: #FFFFFF;
-    position: absolute;
-    top: 12.5%;
-    bottom: 12.5%;
-    right: 5px;
-    border-radius: 20px;
-    transition: right 0.2s ease-in 0s;
-}
-
-.onoffswitch-checkbox:checked+.onoffswitch-label .onoffswitch-inner {
-    margin-left: 0;
-}
-
-.onoffswitch-checkbox:checked+.onoffswitch-label .onoffswitch-switch {
-    right: 50%;
-}
-
 #weather-clock-widget {
     position: fixed;
     top: 420px;
@@ -1632,8 +1525,8 @@ footer:hover {
     backdrop-filter: var(--glass-effect);
     -webkit-backdrop-filter: var(--glass-effect);
     border-radius: 16px;
-    padding: 18px;
-    width: 220px;
+    padding: 20px;
+    width: 320px;
     color: var(--text-primary);
     box-shadow: var(--shadow-cyber);
     border: 1px solid var(--border-card);
@@ -1697,7 +1590,7 @@ footer:hover {
 }
 
 .widget-time {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: bold;
     font-family: 'Courier New', Courier, monospace;
     text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(123, 44, 191, 0.3);
@@ -1724,14 +1617,15 @@ footer:hover {
 .widget-weather-details {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .weather-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
+    align-items: flex-start;
+    font-size: 14px;
+    gap: 12px;
 }
 
 .weather-item .label {
@@ -1739,24 +1633,74 @@ footer:hover {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    flex-shrink: 0;
+    padding-top: 2px;
 }
 
-.weather-item span:last-child {
+.weather-item .value {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 6px;
     font-weight: 500;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.4;
 }
 
 #weather-address {
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.45;
+}
+
+#weather-refresh-btn {
+    margin-left: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.06);
+    color: rgba(0, 212, 255, 0.85);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+    vertical-align: middle;
+}
+
+#weather-refresh-btn:hover {
+    background: rgba(0, 212, 255, 0.18);
+    border-color: rgba(0, 212, 255, 0.7);
+    color: var(--primary-cyan);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+    transform: scale(1.08);
+}
+
+#weather-refresh-btn svg {
+    display: block;
+}
+
+#weather-refresh-btn.spinning svg {
+    animation: weather-refresh-spin 0.6s linear;
+}
+
+@keyframes weather-refresh-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 
 #music-player {
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 220px;
+    width: 320px;
     background: var(--bg-card);
     backdrop-filter: var(--glass-effect);
     -webkit-backdrop-filter: var(--glass-effect);
@@ -1961,9 +1905,6 @@ footer:hover {
     position: absolute;
     top: 0;
     left: 0;
-    background-image: url('../img/i1.png');
-    background-size: cover;
-    background-position: center;
     transition: animation-play-state 0.3s ease;
 }
 
@@ -2096,22 +2037,6 @@ footer:hover {
     height: 48px;
     color: white;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
-}
-
-.record-player .record {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-color: #11111b;
-    object-fit: cover;
-    animation: rotate 10s linear infinite;
-    animation-play-state: paused;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background-image: url('../img/i1.png');
-    background-size: cover;
-    background-position: center;
 }
 
 .record-player .album-art {
@@ -2345,7 +2270,7 @@ footer:hover {
     }
     
     #music-player {
-        width: 180px;
+        width: 280px;
         padding: 15px;
     }
     
@@ -2539,12 +2464,13 @@ footer:hover {
 
 #volume-range::-webkit-slider-runnable-track {
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-cyan) 0%, var(--primary-cyan) var(--volume-percent, 80%), rgba(0, 212, 255, 0.1) var(--volume-percent, 80%));
+    background: linear-gradient(90deg, var(--primary-cyan) 0%, var(--primary-cyan) var(--volume-percent, 100%), rgba(0, 212, 255, 0.1) var(--volume-percent, 100%));
     border-radius: 2px;
 }
 
 /* 专辑封面样式 */
-.record-player .album-art {
+.record-player .album-art,
+.record-player .album-art img {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2558,7 +2484,14 @@ footer:hover {
     transition: opacity 0.3s ease;
 }
 
-.record-player.playing .album-art {
+.record-player .album-art {
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.record-player.playing .album-art,
+.record-player.playing .album-art img {
     opacity: 0.6;
 }
 
@@ -2588,4 +2521,14 @@ footer:hover {
     border-radius: 50%;
     border: 1px solid rgba(0, 212, 255, 0.05);
     pointer-events: none;
+}
+
+/* 无障碍：用户偏好减少动画时禁用所有过渡/动画 */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
