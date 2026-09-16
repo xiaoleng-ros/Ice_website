@@ -96,11 +96,11 @@ document.addEventListener('DOMContentLoaded', function () {
             reset() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 0.5;
+                this.size = Math.random() * 1.3 + 0.4;
                 this.speedX = (Math.random() - 0.5) * 0.5;
                 this.speedY = (Math.random() - 0.5) * 0.5;
                 this.opacity = Math.random() * 0.5 + 0.2;
-                this.hue = Math.random() * 60 + 180; // 蓝色到青色范围
+                this.hue = Math.random() * 95 + 185; // 全息频谱：青(185) → 蓝紫(280) 区间
                 this.life = Math.random() * 100 + 100; // 粒子生命周期
                 this.maxLife = this.life;
             }
@@ -135,15 +135,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 // 根据生命周期调整透明度
                 const lifeRatio = this.life / this.maxLife;
                 const currentOpacity = this.opacity * lifeRatio;
-                
+
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${currentOpacity})`;
+                ctx.fillStyle = `hsla(${this.hue}, 85%, 72%, ${currentOpacity})`;
                 ctx.fill();
-                
-                // 添加发光效果
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${currentOpacity * 0.5})`;
             }
         }
 
@@ -174,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
                         const opacity = (1 - distance / 120) * 0.15 * avgLifeRatio;
-                        ctx.strokeStyle = `rgba(0, 212, 255, ${opacity})`;
+                        ctx.strokeStyle = `rgba(53, 233, 255, ${opacity})`;
                         ctx.lineWidth = 0.5;
                         ctx.stroke();
                     }
@@ -275,41 +271,63 @@ document.addEventListener('DOMContentLoaded', function () {
     let volume = 1.0;
     let playlist = [];
 
-    // 从API获取音乐列表
-    async function fetchMusicList() {
+    // ---------------------------------------------------------
+    // 曲库来源：网易云歌单（经服务端 Meting 代理）。
+    // 本地曲库（/api/music + static/music/）已于 2026-09-16 移除，
+    // 不再保留本地 mp3 / lrc 回退。
+    // 参考《前台网易云音乐播放器-通用方案.md》
+    // ---------------------------------------------------------
+    const PLAYLIST_TIMEOUT = 10000;
+    let loadErrorCount = 0;
+
+    // 支持用 ?playlist=xxx 临时指定网易云歌单 ID
+    function getPlaylistIdFromUrl() {
         try {
-            const response = await fetch('/api/music');
+            return new URLSearchParams(window.location.search).get('playlist');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function fetchNeteasePlaylist() {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), PLAYLIST_TIMEOUT);
+        try {
+            const playlistId = getPlaylistIdFromUrl();
+            const query = playlistId ? `?id=${encodeURIComponent(playlistId)}` : '';
+            const response = await fetch(`/api/netease/playlist${query}`, { signal: ctrl.signal });
+            if (!response.ok) return null;
             const result = await response.json();
-            
-            if (result.success && result.data.length > 0) {
-                playlist = result.data;
-                console.log(`成功加载 ${playlist.length} 首歌曲`);
-                
-                // 加载第一首歌曲
-                loadSong(currentSongIndex);
-            } else {
-                console.error('没有找到音乐文件');
-                // 使用默认音乐
-                playlist = [{
-                    title: '暂无音乐',
-                    artist: '请添加音乐文件',
-                    src: '',
-                    cover: '/static/img/music.png',
-                    lyrics: null
-                }];
-            }
+            return (result.success && result.data && result.data.length > 0) ? result.data : null;
         } catch (error) {
-            console.error('获取音乐列表失败:', error);
-            // 使用默认音乐
+            console.warn('网易云歌单加载失败：', error.message);
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    async function fetchMusicList() {
+        const list = await fetchNeteasePlaylist();
+        if (list) {
+            console.log(`网易云歌单加载成功，共 ${list.length} 首`);
+        }
+
+        if (list && list.length > 0) {
+            playlist = list;
+            loadSong(currentSongIndex);
+        } else {
             playlist = [{
-                    title: '我好像在哪见过你',
-                    artist: '薛之谦',
-                    src: './static/music/我好像在哪见过你 - 薛之谦.mp3',
-                    cover: '/static/img/music.png',
-                lyrics: './static/music/我好像在哪见过你 - 薛之谦.lrc'
+                title: '暂无音乐',
+                artist: '请添加音乐文件',
+                src: '',
+                cover: '/static/img/music.png',
+                lyrics: null
             }];
             loadSong(currentSongIndex);
         }
+
+        renderPlaylist();
     }
 
     function loadSong(index) {
@@ -327,7 +345,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const imgEl = recordPlayer.querySelector('img');
         const sourceEl = recordPlayer.querySelector('source');
         if (imgEl) imgEl.src = song.cover;
-        if (sourceEl && song.cover) sourceEl.srcset = song.cover.replace(/\.png$/i, '.webp');
+        // webp 源只针对项目内的 png 封面，网易云远程封面不使用
+        if (sourceEl) {
+            if (song.cover && /^\/static\//.test(song.cover)) {
+                sourceEl.srcset = song.cover.replace(/\.png$/i, '.webp');
+            } else {
+                sourceEl.removeAttribute('srcset');
+            }
+        }
 
         // 更新歌曲信息
         if (songTitle) songTitle.textContent = song.title;
@@ -356,7 +381,22 @@ document.addEventListener('DOMContentLoaded', function () {
         sound = new Howl({
             src: [song.src],
             html5: true,
+            // 网易云直链没有文件扩展名，必须显式声明格式，否则 Howler 无法选择解码器
+            format: ['mp3'],
             volume: volume,
+            onload: function () {
+                loadErrorCount = 0;
+            },
+            onloaderror: function (_, error) {
+                console.warn('音频加载失败：', error);
+                // 死链自动跳下一首，避免整站没声音
+                if (playlist.length > 1 && loadErrorCount < playlist.length) {
+                    loadErrorCount++;
+                    currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                    loadSong(currentSongIndex);
+                    if (isPlaying) sound.play();
+                }
+            },
             onplay: function () {
                 isPlaying = true;
                 updatePlayPauseIcons(true);
@@ -400,6 +440,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 lyricsContainer.style.display = 'none';
             }
         });
+
+        // 同步曲目列表高亮与底部「正在播放」
+        updateActiveItem();
     }
 
     function updatePlayPauseIcons(playing) {
@@ -489,7 +532,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateProgressBar() {
-        if (sound && sound.playing()) {
+        // isSeeking 时让位给拖动，避免动画循环把手柄"拽回去"
+        if (sound && sound.playing() && !isSeeking) {
             const seek = sound.seek() || 0;
             const duration = sound.duration() || 0;
             const progress = (seek / duration) * 100;
@@ -504,13 +548,98 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 进度条点击事件
-    progressBarContainer.addEventListener('click', function (e) {
+    // 进度条：点击 / 拖动定位 / 键盘微调
+    // 关键：拖动过程中只更新 UI 预览，松手才真正 seek —— 避免高频 seek 造成卡顿
+    const seekTip = document.getElementById('seek-tip');
+
+    function ratioFromClientX(clientX) {
+        const rect = progressBarContainer.getBoundingClientRect();
+        if (!rect.width) return null;
+        return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    }
+
+    function targetTime(ratio) {
+        const duration = sound ? sound.duration() : 0;
+        return (duration && isFinite(duration)) ? ratio * duration : 0;
+    }
+
+    function updateSeekTip(ratio) {
+        if (!seekTip) return;
+        seekTip.textContent = formatTime(targetTime(ratio));
+        seekTip.style.left = (ratio * 100) + '%';
+    }
+
+    function updateSeekPreview(ratio) {
+        if (progressBar) progressBar.style.width = (ratio * 100) + '%';
+        if (currentTimeEl) currentTimeEl.textContent = formatTime(targetTime(ratio));
+        updateSeekTip(ratio);
+    }
+
+    function commitSeek(ratio) {
         if (!sound) return;
-        const width = this.clientWidth;
-        const clickX = e.offsetX;
         const duration = sound.duration();
-        sound.seek((clickX / width) * duration);
+        if (!duration || !isFinite(duration)) return;
+        sound.seek(ratio * duration);
+    }
+
+    let isSeeking = false;
+
+    progressBarContainer.addEventListener('pointerdown', function (e) {
+        if (!sound) return;
+        const ratio = ratioFromClientX(e.clientX);
+        if (ratio === null) return;
+        isSeeking = true;
+        progressBarContainer.classList.add('seeking');
+        if (progressBarContainer.setPointerCapture) {
+            try { progressBarContainer.setPointerCapture(e.pointerId); } catch (err) {}
+        }
+        updateSeekPreview(ratio);
+        e.preventDefault();
+    });
+
+    progressBarContainer.addEventListener('pointermove', function (e) {
+        const ratio = ratioFromClientX(e.clientX);
+        if (ratio === null) return;
+        if (isSeeking) {
+            updateSeekPreview(ratio);
+        } else {
+            updateSeekTip(ratio); // 悬停预览：只动气泡，不动进度条
+        }
+    });
+
+    function finishSeek(e) {
+        if (!isSeeking) return;
+        isSeeking = false;
+        progressBarContainer.classList.remove('seeking');
+        const ratio = ratioFromClientX(e.clientX);
+        if (ratio !== null) {
+            updateSeekPreview(ratio);
+            commitSeek(ratio);
+        }
+        if (isPlaying) requestAnimationFrame(updateProgressBar);
+    }
+
+    progressBarContainer.addEventListener('pointerup', finishSeek);
+    progressBarContainer.addEventListener('pointercancel', finishSeek);
+
+    // 键盘微调：← / → 跳 5 秒，按住 Shift 跳 15 秒（输入框聚焦时不拦截）
+    document.addEventListener('keydown', function (e) {
+        if (!sound) return;
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const el = e.target;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+
+        const duration = sound.duration();
+        if (!duration || !isFinite(duration)) return;
+
+        const step = e.shiftKey ? 15 : 5;
+        const delta = e.key === 'ArrowRight' ? step : -step;
+        const next = Math.min(duration, Math.max(0, (sound.seek() || 0) + delta));
+
+        sound.seek(next);
+        if (progressBar) progressBar.style.width = ((next / duration) * 100) + '%';
+        if (currentTimeEl) currentTimeEl.textContent = formatTime(next);
+        e.preventDefault();
     });
 
     // 播放/暂停按钮事件
@@ -564,6 +693,149 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // ---------------------------------------------------------
+    // 曲目列表：能看到全部歌曲、筛选、点选切歌
+    // ---------------------------------------------------------
+    const playlistBtn = document.getElementById('playlist-btn');
+    const plOverlay = document.getElementById('pl-overlay');
+    const plClose = document.getElementById('pl-close');
+    const plList = document.getElementById('pl-list');
+    const plCount = document.getElementById('pl-count');
+    const plSearch = document.getElementById('pl-search');
+    const plNow = document.getElementById('pl-now');
+
+    function renderPlaylist(keyword) {
+        if (!plList) return;
+        const kw = (keyword || '').trim().toLowerCase();
+        plList.innerHTML = '';
+
+        const matched = [];
+        playlist.forEach(function (song, index) {
+            if (kw) {
+                const hay = ((song.title || '') + ' ' + (song.artist || '')).toLowerCase();
+                if (hay.indexOf(kw) === -1) return;
+            }
+            matched.push({ song: song, index: index });
+        });
+
+        if (plCount) {
+            plCount.textContent = kw
+                ? (matched.length + ' / ' + playlist.length + ' 首')
+                : (playlist.length + ' 首');
+        }
+
+        if (!matched.length) {
+            const empty = document.createElement('div');
+            empty.className = 'pl-empty';
+            empty.textContent = playlist.length ? '没有匹配的曲目' : '暂无可播放曲目';
+            plList.appendChild(empty);
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        matched.forEach(function (entry) {
+            const song = entry.song;
+            const index = entry.index;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'pl-item' + (index === currentSongIndex ? ' active' : '');
+            btn.dataset.index = String(index);
+            btn.setAttribute('role', 'listitem');
+
+            const idx = document.createElement('span');
+            idx.className = 'pl-idx';
+            idx.textContent = String(index + 1).padStart(2, '0');
+
+            const meta = document.createElement('span');
+            meta.className = 'pl-meta';
+
+            const t = document.createElement('span');
+            t.className = 'pl-song';
+            t.textContent = song.title || '未知曲目';
+
+            const a = document.createElement('span');
+            a.className = 'pl-artist';
+            a.textContent = song.artist || '未知歌手';
+
+            meta.appendChild(t);
+            meta.appendChild(a);
+
+            const eq = document.createElement('span');
+            eq.className = 'pl-eq';
+            eq.innerHTML = '<i></i><i></i><i></i>';
+
+            btn.appendChild(idx);
+            btn.appendChild(meta);
+            btn.appendChild(eq);
+            frag.appendChild(btn);
+        });
+        plList.appendChild(frag);
+    }
+
+    function updateActiveItem() {
+        const song = playlist[currentSongIndex];
+        if (plNow) {
+            plNow.textContent = song
+                ? (song.title + (song.artist ? ' · ' + song.artist : ''))
+                : '--';
+        }
+        if (!plList) return;
+        const nodes = plList.querySelectorAll('.pl-item');
+        for (let i = 0; i < nodes.length; i++) {
+            nodes[i].classList.toggle('active', Number(nodes[i].dataset.index) === currentSongIndex);
+        }
+    }
+
+    function playAt(index) {
+        if (!playlist.length || index < 0 || index >= playlist.length) return;
+        currentSongIndex = index;
+        loadSong(index);
+        if (sound) sound.play();
+        isPlaying = true;
+        updateActiveItem();
+    }
+
+    function openPlaylist() {
+        if (!plOverlay) return;
+        renderPlaylist(plSearch ? plSearch.value : '');
+        plOverlay.classList.add('active');
+        plOverlay.setAttribute('aria-hidden', 'false');
+        if (plList) {
+            const active = plList.querySelector('.pl-item.active');
+            if (active) active.scrollIntoView({ block: 'center' });
+        }
+    }
+
+    function closePlaylist() {
+        if (!plOverlay) return;
+        plOverlay.classList.remove('active');
+        plOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    if (playlistBtn) playlistBtn.addEventListener('click', openPlaylist);
+    if (plClose) plClose.addEventListener('click', closePlaylist);
+    if (plOverlay) {
+        plOverlay.addEventListener('click', function (e) {
+            if (e.target === plOverlay) closePlaylist();
+        });
+    }
+    if (plList) {
+        plList.addEventListener('click', function (e) {
+            const item = e.target.closest ? e.target.closest('.pl-item') : null;
+            if (!item || item.dataset.index === undefined) return;
+            playAt(Number(item.dataset.index));
+        });
+    }
+    if (plSearch) {
+        plSearch.addEventListener('input', function () {
+            renderPlaylist(this.value);
+        });
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && plOverlay && plOverlay.classList.contains('active')) closePlaylist();
+    });
 
     // 监听页面可见性变化，同步播放状态
     let wasPlayingBeforeHidden = false;
@@ -1176,96 +1448,48 @@ document.addEventListener('DOMContentLoaded', function() {
     animatedElements.forEach(el => observer.observe(el));
 });
 
-// 添加赛博朋克自定义光标
+// 自定义光标（HUD 瞄准环 + 中心游标点）
+// 性能要点：位置一律走 transform（合成层），绝不用 left/top（每帧触发重排，是"不跟手"的元凶）
 document.addEventListener('DOMContentLoaded', function() {
-    // 创建光标外圈
+    if (prefersReducedMotion) return;
+
     const cursorOuter = document.createElement('div');
-    cursorOuter.style.cssText = `
-        position: fixed;
-        width: 30px;
-        height: 30px;
-        border: 2px solid rgba(0, 212, 255, 0.6);
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 999999;
-        transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
-        transform: translate(-50%, -50%);
-        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
-    `;
+    cursorOuter.className = 'hud-cursor-outer';
     document.body.appendChild(cursorOuter);
-    
-    // 创建光标内点
+
     const cursorInner = document.createElement('div');
-    cursorInner.style.cssText = `
-        position: fixed;
-        width: 6px;
-        height: 6px;
-        background: rgba(0, 212, 255, 0.9);
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 1000000;
-        transform: translate(-50%, -50%);
-        box-shadow: 0 0 8px rgba(0, 212, 255, 0.8);
-    `;
+    cursorInner.className = 'hud-cursor-inner';
     document.body.appendChild(cursorInner);
-    
-    let cursorX = 0, cursorY = 0;
-    let outerX = 0, outerY = 0;
-    
-    // 鼠标移动事件
+
+    let mx = window.innerWidth / 2;
+    let my = window.innerHeight / 2;
+    let ox = mx, oy = my;      // 外圈当前坐标
+    let isDown = false;
+    let isHot = false;
+    let hasMoved = false;   // 首次移动前不落位，避免加载后光标孤零零停在屏幕中央
+    let lastOuter = '';
+    let lastInner = '';
+
     document.addEventListener('mousemove', function(e) {
-        cursorX = e.clientX;
-        cursorY = e.clientY;
-        
-        // 内点直接跟随
-        cursorInner.style.left = cursorX + 'px';
-        cursorInner.style.top = cursorY + 'px';
+        mx = e.clientX;
+        my = e.clientY;
+        hasMoved = true;
+    }, { passive: true });
+
+    document.addEventListener('mousedown', function() { isDown = true; });
+    document.addEventListener('mouseup', function() { isDown = false; });
+
+    // 事件委托：动态生成的元素（如曲目列表项）也能命中
+    const HOT_SELECTOR = 'a, button, input, .iconItem, .projectItem, .left-tag-item, .control-btn, .pl-item, .progress-bar-container, .record-player, .left-div';
+    document.addEventListener('mouseover', function(e) {
+        const t = e.target;
+        const hot = !!(t && t.closest && t.closest(HOT_SELECTOR));
+        if (hot === isHot) return;
+        isHot = hot;
+        cursorOuter.classList.toggle('hot', hot);
+        cursorInner.classList.toggle('hot', hot);
     });
-    
-    // 外圈平滑跟随
-    function animateCursor() {
-        if (isPageVisible && !prefersReducedMotion) {
-            outerX += (cursorX - outerX) * 0.15;
-            outerY += (cursorY - outerY) * 0.15;
-            cursorOuter.style.left = outerX + 'px';
-            cursorOuter.style.top = outerY + 'px';
-        }
-        requestAnimationFrame(animateCursor);
-    }
-    animateCursor();
-    
-    // 悬停时可交互元素时光标变化
-    const interactiveElements = document.querySelectorAll('a, button, .iconItem, .projectItem, .left-tag-item, .control-btn');
-    interactiveElements.forEach(el => {
-        el.addEventListener('mouseenter', function() {
-            cursorOuter.style.width = '45px';
-            cursorOuter.style.height = '45px';
-            cursorOuter.style.borderColor = 'rgba(0, 255, 136, 0.8)';
-            cursorOuter.style.boxShadow = '0 0 15px rgba(0, 255, 136, 0.5)';
-            cursorInner.style.background = 'rgba(0, 255, 136, 0.9)';
-            cursorInner.style.boxShadow = '0 0 12px rgba(0, 255, 136, 0.8)';
-        });
-        el.addEventListener('mouseleave', function() {
-            cursorOuter.style.width = '30px';
-            cursorOuter.style.height = '30px';
-            cursorOuter.style.borderColor = 'rgba(0, 212, 255, 0.6)';
-            cursorOuter.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.3)';
-            cursorInner.style.background = 'rgba(0, 212, 255, 0.9)';
-            cursorInner.style.boxShadow = '0 0 8px rgba(0, 212, 255, 0.8)';
-        });
-    });
-    
-    // 点击时光标收缩
-    document.addEventListener('mousedown', function() {
-        cursorOuter.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        cursorInner.style.transform = 'translate(-50%, -50%) scale(0.7)';
-    });
-    document.addEventListener('mouseup', function() {
-        cursorOuter.style.transform = 'translate(-50%, -50%) scale(1)';
-        cursorInner.style.transform = 'translate(-50%, -50%) scale(1)';
-    });
-    
-    // 鼠标离开窗口时隐藏光标
+
     document.addEventListener('mouseleave', function() {
         cursorOuter.style.opacity = '0';
         cursorInner.style.opacity = '0';
@@ -1274,6 +1498,31 @@ document.addEventListener('DOMContentLoaded', function() {
         cursorOuter.style.opacity = '1';
         cursorInner.style.opacity = '1';
     });
+
+    function frame() {
+        if (isPageVisible && hasMoved) {
+            // 外圈：0.5 阻尼 —— 跟得住，只留一丝拖尾
+            ox += (mx - ox) * 0.5;
+            oy += (my - oy) * 0.5;
+
+            const outerScale = (isDown ? 0.82 : 1) * (isHot ? 1.5 : 1);
+            const outerTransform = 'translate3d(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px,0) translate(-50%,-50%) scale(' + outerScale + ')';
+            if (outerTransform !== lastOuter) {
+                cursorOuter.style.transform = outerTransform;
+                lastOuter = outerTransform;
+            }
+
+            // 内点：完全跟手（它是指示"精确位置"的游标）
+            const innerScale = isDown ? 0.7 : 1;
+            const innerTransform = 'translate3d(' + mx + 'px,' + my + 'px,0) translate(-50%,-50%) scale(' + innerScale + ')';
+            if (innerTransform !== lastInner) {
+                cursorInner.style.transform = innerTransform;
+                lastInner = innerTransform;
+            }
+        }
+        requestAnimationFrame(frame);
+    }
+    frame();
 });
 
 // 添加卡片3D倾斜效果
@@ -1289,10 +1538,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
             
-            const rotateX = (y - centerY) / 10;
-            const rotateY = (centerX - x) / 10;
+            const rotateX = (y - centerY) / 26;
+            const rotateY = (centerX - x) / 26;
             
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.01)`;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`;
         });
         
         card.addEventListener('mouseleave', function() {
@@ -1317,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         display: inline-block;
         width: 2px;
         height: 1em;
-        background: rgba(0, 212, 255, 0.8);
+        background: rgba(53, 233, 255, 0.9);
         margin-left: 2px;
         animation: blink-cursor 0.8s step-end infinite;
         vertical-align: text-bottom;
@@ -1361,98 +1610,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 全局点击波纹已由 createRipple 统一处理（见上），此处不再重复添加
 
-// 添加鼠标跟踪光效（赛博朋克增强版）
+// 鼠标跟随环境光（两层极淡冷光，制造纵深；位置走 transform 合成层）
 document.addEventListener('DOMContentLoaded', function() {
+    if (prefersReducedMotion) return;
+
     const main = document.querySelector('.Iceuu-main');
     if (!main) return;
-    
-    // 创建主光效
-    let lightEffect = document.createElement('div');
+
+    // 主环境光：极淡冰青，只把注意力引到指针附近
+    const lightEffect = document.createElement('div');
     lightEffect.style.cssText = `
         position: fixed;
-        width: 400px;
-        height: 400px;
+        top: 0;
+        left: 0;
+        width: 420px;
+        height: 420px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, rgba(123, 44, 191, 0.05) 30%, transparent 70%);
+        background: radial-gradient(circle, rgba(53, 233, 255, 0.055) 0%, transparent 66%);
         pointer-events: none;
         z-index: 1;
         transition: opacity 0.3s ease;
         will-change: transform;
-        filter: blur(20px);
+        filter: blur(28px);
     `;
     document.body.appendChild(lightEffect);
-    
-    // 创建辅助光效（紫色）
-    let purpleLight = document.createElement('div');
-    purpleLight.style.cssText = `
+
+    // 次环境光：青紫，跟得更慢，制造纵深
+    const blueLight = document.createElement('div');
+    blueLight.style.cssText = `
         position: fixed;
-        width: 250px;
-        height: 250px;
+        top: 0;
+        left: 0;
+        width: 260px;
+        height: 260px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(123, 44, 191, 0.1) 0%, transparent 60%);
+        background: radial-gradient(circle, rgba(176, 124, 255, 0.05) 0%, transparent 62%);
         pointer-events: none;
         z-index: 1;
         will-change: transform;
-        filter: blur(15px);
-        opacity: 0.7;
+        filter: blur(20px);
+        opacity: 0.8;
     `;
-    document.body.appendChild(purpleLight);
-    
-    // 创建绿色小光点
-    let greenDot = document.createElement('div');
-    greenDot.style.cssText = `
-        position: fixed;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: rgba(0, 255, 136, 0.8);
-        pointer-events: none;
-        z-index: 9999;
-        will-change: transform;
-        box-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 0 20px rgba(0, 255, 136, 0.4);
-    `;
-    document.body.appendChild(greenDot);
-    
-    let mouseX = 0, mouseY = 0;
-    let lightX = 0, lightY = 0;
-    let purpleX = 0, purpleY = 0;
-    
+    document.body.appendChild(blueLight);
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let lightX = mouseX, lightY = mouseY;
+    let blueX = mouseX, blueY = mouseY;
+
     document.addEventListener('mousemove', function(e) {
         mouseX = e.clientX;
         mouseY = e.clientY;
-        
-        // 绿色光点跟随鼠标
-        greenDot.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
-    });
-    
-    // 平滑动画循环
+    }, { passive: true });
+
+    // 平滑动画循环（环境光故意比光标慢，属设计意图）
     function animateLights() {
-        if (isPageVisible && !prefersReducedMotion) {
-            // 主光效缓慢跟随（延迟效果）
+        if (isPageVisible) {
             lightX += (mouseX - lightX) * 0.08;
             lightY += (mouseY - lightY) * 0.08;
-            lightEffect.style.transform = `translate(${lightX - 200}px, ${lightY - 200}px)`;
+            lightEffect.style.transform = 'translate3d(' + (lightX - 210).toFixed(1) + 'px, ' + (lightY - 210).toFixed(1) + 'px, 0)';
 
-            // 紫色光效更慢跟随
-            purpleX += (mouseX - purpleX) * 0.05;
-            purpleY += (mouseY - purpleY) * 0.05;
-            purpleLight.style.transform = `translate(${purpleX - 125}px, ${purpleY - 125}px)`;
+            blueX += (mouseX - blueX) * 0.045;
+            blueY += (mouseY - blueY) * 0.045;
+            blueLight.style.transform = 'translate3d(' + (blueX - 130).toFixed(1) + 'px, ' + (blueY - 130).toFixed(1) + 'px, 0)';
         }
         requestAnimationFrame(animateLights);
     }
     animateLights();
-    
-    // 鼠标离开窗口时隐藏光效
+
     document.addEventListener('mouseleave', function() {
         lightEffect.style.opacity = '0';
-        purpleLight.style.opacity = '0';
-        greenDot.style.opacity = '0';
+        blueLight.style.opacity = '0';
     });
-    
+
     document.addEventListener('mouseenter', function() {
         lightEffect.style.opacity = '1';
-        purpleLight.style.opacity = '0.7';
-        greenDot.style.opacity = '1';
+        blueLight.style.opacity = '0.8';
     });
 });
 

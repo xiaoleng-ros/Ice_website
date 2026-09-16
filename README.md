@@ -18,7 +18,7 @@
 
 ### 功能模块
 - **智能音乐播放器**：
-  - 自动扫描本地 MP3 文件，无需手动配置
+  - 曲库来自网易云歌单，支持曲目列表浮层与关键词筛选
   - 支持 LRC 歌词同步显示
   - 唱片旋转动画 + 音乐波形可视化
   - 完整播放控制（播放/暂停、上一首/下一首、音量调节）
@@ -58,8 +58,6 @@ Ice_website/
 │   │   ├── background/       # 背景图片（备用）
 │   │   ├── logo.png          # 头像
 │   │   └── music.png         # 音乐封面
-│   ├── music/                # 音乐文件目录
-│   │   └── *.mp3             # MP3 音乐文件
 │   ├── svg/                  # SVG 图标
 │   └── fonts/                # 自定义字体
 ├── index.html                # 页面入口
@@ -93,21 +91,42 @@ npm start
 
 访问 `http://localhost:3100` 即可查看（可通过 `PORT` 环境变量自定义）。
 
-### 添加音乐
+### 关于本地音乐
 
-只需将 MP3 文件放入 `static/music/` 目录，系统会自动扫描并加载。
+> 早期版本支持把 MP3 放进 `static/music/`，由服务端自动扫描（配合同名 `.lrc` 歌词）。
+> 该本地曲库已于 **2026-09-16 移除**，`/api/music` 接口一并删除——播放器现在**只走网易云歌单**，不再有本地回退。
 
-> 配套歌词：将同名的 `.lrc` 文件放在同一目录即可被自动加载。LRC 须为 UTF-8 编码。
+### 网易云歌单（默认曲库）
 
-**文件命名建议**：
-```
-static/music/
-├── 周杰伦 - 晴天.mp3        # 格式：歌手 - 歌名
-├── 稻香.mp3                 # 或直接用歌名
-└── 薛之谦 - 演员.mp3
-```
+站点启动时从网易云歌单取曲。**没有本地回退**：若 Meting 代理不可用、或歌单被设为私密，曲目列表为空，播放器显示「暂无音乐」。
 
-支持歌词同步：只需将同名 `.lrc` 文件放在同一目录下即可。
+曲库通过 Meting 代理解析（原理见 [前台网易云音乐播放器-通用方案.md](./前台网易云音乐播放器-通用方案.md)）：服务端完成 weapi 加密与直链换取，前端全程同源请求，不存在跨域问题。
+
+**换歌单**——三种方式，优先级从高到低：
+
+1. 环境变量：`NETEASE_PLAYLIST_ID=你的歌单ID npm start`
+2. 临时预览：浏览器访问 `http://localhost:3100/?playlist=你的歌单ID`
+3. 改默认值：`server.js` 里的 `DEFAULT_PLAYLIST_ID`
+
+歌单 ID 从网易云歌单页 URL 里取，如 `https://music.163.com/#/playlist?id=8792942606` 的 ID 是 `8792942606`。
+
+**相关配置项**
+
+| 环境变量 | 含义 | 默认值 |
+|----------|------|--------|
+| `NETEASE_PLAYLIST_ID` | 网易云歌单 ID | `18387867575` |
+| `MUSIC_API_BASE` | Meting 代理地址 | `https://meting.mikus.ink/api`（公共实例，生产建议自建） |
+| `MUSIC_URL_MODE` | `stream` 服务端转发音频（默认，规避 CORS/Referer）<br>`redirect` 302 直跳 CDN（省服务器带宽） | `stream` |
+
+**服务端接口**
+
+| 接口 | 说明 |
+|------|------|
+| `GET /api/netease/playlist?id=<歌单ID>` | 曲目列表（缓存 10 分钟） |
+| `GET /api/netease/url?p=<歌单ID>&i=<序号>` | 音频流，支持 Range 拖动（直链缓存 20 分钟） |
+| `GET /api/netease/lrc?p=<歌单ID>&i=<序号>` | LRC 歌词（缓存 1 小时） |
+
+> 版权提示：网易云曲目受版权保护，此方案适用于个人/非商用场景。
 
 ### 自定义内容
 
@@ -152,7 +171,9 @@ static/music/
 
 项目已内置 `vercel.json`，无需额外配置。
 
-> **注意**：音乐 API 功能 (`/api/music`) 需要 Node.js 服务器支持，Vercel 部署时需要使用 Serverless Functions。
+> **注意**：音乐依赖服务端接口 `/api/netease/*`（由 `server.js` 的 Express 提供）。当前 `vercel.json` 只配了 `rewrites`、**没有 Serverless Functions**，直接部署到 Vercel 只会得到静态站，`/api/netease/*` 全部 404 → 播放器显示「暂无音乐」。
+>
+> 要保住音乐有三条路：① 用能跑 Node 进程的宿主（Railway / Render / VPS）跑 `server.js`；② 把三个接口改写成 Vercel Serverless Function；③ 改前端直连 Meting（该接口返回 `access-control-allow-origin: *`，允许跨域，此时可纯静态托管）。
 
 ---
 

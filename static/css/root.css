@@ -1,80 +1,150 @@
-:root {
-    --main_bg_color: var(--bg-dark);
-    --main_text_color: #e0e0e0;
-    --gradient: linear-gradient(120deg, #00d4ff, #7b2cbf 30%, #00ff88 60%, #ff006e 100%);
-    --gradient-cyber: linear-gradient(135deg, #00d4ff 0%, #7b2cbf 50%, #ff006e 100%);
-    --gradient-neon: linear-gradient(90deg, #00d4ff, #00ff88, #ff006e, #7b2cbf);
-    --purple_text_color: #7b2cbf;
-    --text_bg_color: rgba(10, 10, 15, 0.8);
-    --item_bg_color: rgba(20, 20, 30, 0.7);
-    --item_hover_color: rgba(30, 30, 45, 0.8);
-    --item_left_title_color: #ffffff;
-    --item_left_text_color: #a0a0a0;
-    --footer_text_color: rgba(160, 160, 160, 0.7);
-    --left_tag_item: rgba(0, 212, 255, 0.1);
-    --card_filter: 16px;
-    --back_filter: 0px;
-    --back_filter_color: transparent;
-    --fill: #00d4ff;
-    
-    /* 赛博朋克科技风格增强 */
-    --neon-glow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.2);
-    --neon-glow-purple: 0 0 10px rgba(123, 44, 191, 0.5), 0 0 20px rgba(123, 44, 191, 0.3), 0 0 30px rgba(123, 44, 191, 0.2);
-    --neon-glow-green: 0 0 10px rgba(0, 255, 136, 0.5), 0 0 20px rgba(0, 255, 136, 0.3), 0 0 30px rgba(0, 255, 136, 0.2);
-    --neon-glow-pink: 0 0 10px rgba(255, 0, 110, 0.5), 0 0 20px rgba(255, 0, 110, 0.3), 0 0 30px rgba(255, 0, 110, 0.2);
-    --neon-border: 1px solid rgba(0, 212, 255, 0.3);
-    --neon-border-hover: 1px solid rgba(0, 212, 255, 0.6);
-    --neon-gradient: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
-    
-    /* 赛博朋克色彩 */
-    --primary-cyan: #00d4ff;
-    --primary-purple: #7b2cbf;
-    --primary-green: #00ff88;
-    --primary-pink: #ff006e;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --text-muted: #606060;
-    --bg-card: rgba(15, 15, 25, 0.8);
-    --bg-card-hover: rgba(25, 25, 40, 0.9);
-    --border-card: rgba(0, 212, 255, 0.15);
-    --border-card-hover: rgba(0, 212, 255, 0.4);
-    --bg-dark: #0a0a0f;
-    --bg-darker: #050508;
-    
-    /* 新增赛博朋克变量 */
-    --cyber-grid: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 49px,
-        rgba(0, 212, 255, 0.03) 49px,
-        rgba(0, 212, 255, 0.03) 50px
-    ),
-    repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 49px,
-        rgba(0, 212, 255, 0.03) 49px,
-        rgba(0, 212, 255, 0.03) 50px
-    );
-    --scan-line: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(0, 212, 255, 0.02) 50%,
-        transparent 100%
-    );
-    --glass-effect: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: var(--glass-effect);
-    --shadow-cyber: 0 8px 32px rgba(0, 0, 0, 0.5),
-                    0 0 1px rgba(0, 212, 255, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+/* ============================================================
+   Iceuu · 全息频谱（Holographic Spectrum）设计令牌
+   语言：青紫双色全息 + 半透明分层 + 色差描边 + 投影层叠
+   两色分工：
+     青  #35E9FF —— 主色，承载"数据 / 状态 / 主读数"
+     紫  #B07CFF —— 副色，承载"结构 / 投影 / 第二层信息"
+     中间的蓝紫 #8FA8FF 只出现在青→紫的渐变过渡里，不单独使用
+   ============================================================ */
 
-    /* z-index 语义化层级（避免裸数字） */
-    --z-bg: -1;
-    --z-base: 1;
-    --z-card: 10;
-    --z-fixed: 100;
+:root {
+    /* ---------- 底色：深空紫蓝 ---------- */
+    --bg-void:        #03040C;
+    --bg-darker:      #02030A;
+    --bg-dark:        #05070F;
+    --bg-panel:       rgba(17, 19, 46, 0.55);
+    --bg-panel-hi:    rgba(27, 27, 68, 0.70);
+    --bg-inset:       rgba(7, 9, 22, 0.46);
+
+    /* ---------- 发丝线：偏全息白 ---------- */
+    --line-hair:      rgba(184, 206, 255, 0.10);
+    --line-1:         rgba(184, 206, 255, 0.17);
+    --line-2:         rgba(184, 206, 255, 0.30);
+    --line-accent:    rgba(53, 233, 255, 0.45);
+    --line-accent-hi: rgba(53, 233, 255, 0.85);
+    --line-violet:    rgba(176, 124, 255, 0.45);
+    --line-violet-hi: rgba(176, 124, 255, 0.85);
+
+    /* ---------- 文字 ---------- */
+    --text-hi:        #EAF1FF;
+    --text:           #A9B7DE;
+    --text-dim:       #7484AE;
+    --text-faint:     #4E5A7C;
+
+    /* ---------- 全息双色 ---------- */
+    --accent:         #35E9FF;   /* 青 · 主 */
+    --accent-2:       #B07CFF;   /* 紫 · 副 */
+    --accent-dim:     #1B8FB8;
+    --violet:         #B07CFF;
+    --violet-dim:     #6B3FBF;
+    --accent-soft:    rgba(53, 233, 255, 0.10);
+    --accent-soft-hi: rgba(53, 233, 255, 0.20);
+    --violet-soft:    rgba(176, 124, 255, 0.10);
+    --violet-soft-hi: rgba(176, 124, 255, 0.22);
+
+    /* ---------- 全息渐变 ---------- */
+    --holo-grad:      linear-gradient(96deg, #8CF3FF 0%, #35E9FF 28%, #8FA8FF 60%, #C77DFF 100%);
+    --holo-grad-line: linear-gradient(90deg, rgba(53, 233, 255, 0.85), rgba(176, 124, 255, 0.85));
+
+    /* ---------- 状态 ---------- */
+    --ok:             #4FE0A8;
+    --warn:           #FFB454;
+
+    /* ---------- 字形 ---------- */
+    --font-display:   "Orbitron", "Rajdhani", "b", sans-serif;
+    --font-hero:      "Sora", "Rajdhani", "b", -apple-system, sans-serif;
+    --font-brand:     "Audiowide", "Sora", "Rajdhani", "b", sans-serif;
+    --font-mono:      "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    --font-body:      "b", "Rajdhani", -apple-system, "Segoe UI", sans-serif;
+
+    /* ---------- 几何：小圆角，拒绝"胶囊感" ---------- */
+    --r-sm: 3px;
+    --r-md: 5px;
+    --r-lg: 8px;
+
+    /* ---------- 深度：青紫双层辉光 + 投影层叠 ---------- */
+    --edge-top:   inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --edge-holo:  inset 0 0 26px rgba(53, 233, 255, 0.05);
+    --depth-card: 0 14px 40px rgba(0, 0, 0, 0.50), 0 0 34px rgba(124, 77, 255, 0.10);
+    --depth-pop:  0 22px 56px rgba(0, 0, 0, 0.62),
+                  0 0 46px rgba(53, 233, 255, 0.14),
+                  0 0 60px rgba(176, 124, 255, 0.12);
+
+    /* ---------- 网格底纹：细网格偏白，粗网格青紫分色 ---------- */
+    --hud-grid:
+        linear-gradient(to right,  rgba(184, 206, 255, 0.055) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(to bottom, rgba(184, 206, 255, 0.055) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(to right,  rgba(53, 233, 255, 0.075) 1px, transparent 1px) 0 0 / 170px 170px,
+        linear-gradient(to bottom, rgba(176, 124, 255, 0.075) 1px, transparent 1px) 0 0 / 170px 170px;
+
+    /* ---------- 四角框：青紫对角错位（全息头显）----------
+       注意：这里必须写死颜色，不能写成 var(--corner)。
+       带 var() 的自定义属性会在 :root 上就被求值完，子元素再改 --corner 是无效的。
+       所以准备"常态/高亮"两套，hover 时整条 background 换掉。 */
+    --hud-corners:
+        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) left  6px top    6px / 11px 1px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) left  6px top    6px / 1px 11px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) right 6px top    6px / 11px 1px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) right 6px top    6px / 1px 11px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) left  6px bottom 6px / 11px 1px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) left  6px bottom 6px / 1px 11px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) right 6px bottom 6px / 11px 1px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) right 6px bottom 6px / 1px 11px no-repeat;
+
+    --hud-corners-hi:
+        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) left  6px top    6px / 14px 1px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) left  6px top    6px / 1px 14px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) right 6px top    6px / 14px 1px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) right 6px top    6px / 1px 14px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) left  6px bottom 6px / 14px 1px no-repeat,
+        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) left  6px bottom 6px / 1px 14px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) right 6px bottom 6px / 14px 1px no-repeat,
+        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) right 6px bottom 6px / 1px 14px no-repeat;
+
+    /* ---------- 全息顶光带：模拟投影面自上方受光 ---------- */
+    --holo-sheen: linear-gradient(180deg, rgba(53, 233, 255, 0.10), rgba(176, 124, 255, 0.05) 44%, transparent 76%);
+
+    /* 面板底色（同样写死，避免 var() 提前求值） */
+    --panel-base:    linear-gradient(180deg, rgba(22, 24, 58, 0.52), rgba(8, 10, 26, 0.64));
+    --panel-base-hi: linear-gradient(180deg, rgba(53, 233, 255, 0.09), rgba(176, 124, 255, 0.06) 46%, rgba(8, 10, 26, 0.70));
+    --panel-solid:   linear-gradient(180deg, rgba(22, 24, 58, 0.46), rgba(8, 10, 26, 0.56));
+
+    /* ---------- 层级 ---------- */
+    --z-bg:     -1;
+    --z-base:   1;
+    --z-card:   10;
+    --z-fixed:  100;
     --z-overlay: 1000;
-    --z-modal: 10000;
-    --z-tooltip: 100000;
+    --z-modal:  10000;
     --z-cursor: 999999;
+
+    /* ============================================================
+       兼容别名：index.html 内联样式引用了 --fill，
+       其余别名仅为平滑过渡保留，新代码请直接用上面的语义变量。
+       ============================================================ */
+    --fill:            var(--accent);
+    --main_bg_color:   var(--bg-dark);
+    --main_text_color: var(--text);
+    --text-primary:    var(--text-hi);
+    --text-secondary:  var(--text-dim);
+    --text-muted:      var(--text-faint);
+    --purple_text_color: var(--accent-2);
+    --item_bg_color:   var(--bg-panel);
+    --item_hover_color: var(--bg-panel-hi);
+    --item_left_title_color: var(--text-hi);
+    --item_left_text_color:  var(--text-dim);
+    --footer_text_color:     var(--text-faint);
+    --left_tag_item:   var(--accent-soft);
+    --bg-card:         var(--bg-panel);
+    --bg-card-hover:   var(--bg-panel-hi);
+    --border-card:     var(--line-hair);
+    --border-card-hover: var(--line-accent);
+    --primary-cyan:    var(--accent);
+    --primary-purple:  var(--accent-2);
+    --primary-green:   var(--ok);
+    --primary-pink:    var(--accent-2);
+    --card_filter:     10px;
+    --glass-effect:    blur(16px) saturate(155%);
+    --cyber-grid:      var(--hud-grid);
+    --shadow-cyber:    var(--edge-top), var(--depth-card);
 }
