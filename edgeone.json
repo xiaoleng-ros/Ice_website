@@ -1,0 +1,6 @@
+{
+  "buildCommand": "node scripts/build-edgeone.js",
+  "installCommand": "npm install --omit=dev --no-audit --no-fund",
+  "outputDirectory": "dist",
+  "nodeVersion": "22.11.0"
+}

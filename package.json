@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node scripts/convert-images.js && node scripts/convert-fonts.js && node server.js",
+    "build": "node scripts/build-edgeone.js",
     "build:assets": "node scripts/convert-images.js && node scripts/convert-fonts.js",
     "test": "node -e \"console.log('No tests configured')\""
   },
