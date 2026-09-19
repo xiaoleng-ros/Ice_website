@@ -307,8 +307,61 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ---------------------------------------------------------
+    // 纯静态兜底：同源 /api/netease/* 不可用时（纯静态托管、或边缘函数
+    // 未部署/故障），浏览器直连 Meting 公共接口。该接口 CORS 开放（*），
+    // 音频直链为 https 且支持 Range，实测可跨域直连、零后端。
+    // 参考《前台网易云音乐播放器-通用方案.md》第 3.2 节
+    // ---------------------------------------------------------
+    const METING_API = 'https://meting.mikus.ink/api';
+    const DEFAULT_PLAYLIST_ID = '18387867575';
+
+    async function fetchDirectMetingPlaylist() {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), PLAYLIST_TIMEOUT);
+        try {
+            const playlistId = getPlaylistIdFromUrl() || DEFAULT_PLAYLIST_ID;
+            const api = `${METING_API}?server=netease&type=playlist&id=${encodeURIComponent(playlistId)}`;
+            const response = await fetch(api, { signal: ctrl.signal });
+            if (!response.ok) return null;
+            const raw = await response.json();
+            if (!Array.isArray(raw)) return null;
+
+            const list = raw
+                .map(item => {
+                    if (!item || typeof item.url !== 'string' || !/^https?:\/\//i.test(item.url)) return null;
+                    // 从直链里抠出歌曲 ID（网易直链带 ?id=xxx），歌词走 Meting 的 lrc 接口
+                    let songId = '';
+                    try { songId = new URL(item.url).searchParams.get('id') || ''; } catch (e) { songId = ''; }
+                    const lyricsUrl = (typeof item.lrc === 'string' && /^https?:\/\//i.test(item.lrc))
+                        ? item.lrc
+                        : (songId ? `${METING_API}?server=netease&type=lrc&id=${encodeURIComponent(songId)}` : null);
+                    return {
+                        title: item.title || '未知曲目',
+                        artist: item.author || '未知歌手',
+                        cover: item.pic || '/static/img/music.png',
+                        // 网易直链已是 https；万一给 http 也强升 https，避免 https 页面被混合内容拦截
+                        src: item.url.replace(/^http:\/\//i, 'https://'),
+                        lyrics: lyricsUrl
+                    };
+                })
+                .filter(Boolean);
+            return list.length > 0 ? list : null;
+        } catch (error) {
+            console.warn('直连 Meting 兜底失败：', error.message);
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
     async function fetchMusicList() {
-        const list = await fetchNeteasePlaylist();
+        // 两级链路：优先同源代理（本地 Express / 边缘函数），失败则浏览器直连 Meting
+        let list = await fetchNeteasePlaylist();
+        if (!list) {
+            list = await fetchDirectMetingPlaylist();
+            if (list) console.log(`同源接口不可用，已直连 Meting 兜底，共 ${list.length} 首`);
+        }
         if (list) {
             console.log(`网易云歌单加载成功，共 ${list.length} 首`);
         }

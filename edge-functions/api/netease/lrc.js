@@ -123,5 +123,3 @@ async function handler(context) {
 }
 
 export default handler;
-export const onRequest = handler;
-export const onRequestGet = handler;
