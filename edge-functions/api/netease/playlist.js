@@ -1,10 +1,11 @@
 /**
- * EdgeOne Pages Function —— 网易云歌单（经 Meting 代理）
+ * EdgeOne Makers · Edge Function（边缘函数）
  * 路由：GET /api/netease/playlist?id=<歌单ID>
  *
- * 对应 server.js 里的同名接口。EdgeOne Pages 的边缘运行时是
- * V8 / Web Worker（提供 fetch / Request / Response / URL），不是 Node，
- * 所以这里用 Web 标准 API 复刻原本 Express 版的逻辑，前端无需改动。
+ * ⚠️ 目录约定（Makers 新版）：edge-functions/ 下的文件树直接映射 URL，
+ *    即 edge-functions/api/netease/playlist.js → /api/netease/playlist
+ *    （旧版 Pages 用的 functions/ 目录 Makers 不识别，已废弃）
+ * 运行时：Edge Runtime（V8 / Web 标准 API，不是 Node，无 express）
  */
 const METING_API = 'https://meting.mikus.ink/api';
 const DEFAULT_PLAYLIST_ID = '18387867575';
@@ -39,7 +40,8 @@ function extractSongId(item, fallbackIndex, playlistId) {
     return `${playlistId}:${fallbackIndex}`;
 }
 
-export async function onRequestGet({ request }) {
+async function handler(context) {
+    const request = context.request;
     const url = new URL(request.url);
     const playlistId = String(url.searchParams.get('id') || DEFAULT_PLAYLIST_ID).trim();
 
@@ -88,3 +90,7 @@ export async function onRequestGet({ request }) {
         return json({ success: false, error: '网易云接口暂时不可用', data: [] }, 502, 0);
     }
 }
+
+export default handler;
+export const onRequest = handler;
+export const onRequestGet = handler;

@@ -1,11 +1,11 @@
 /**
- * EdgeOne Pages Function —— 网易云音频（服务端转发，规避 Referer / CORS）
+ * EdgeOne Makers · Edge Function（边缘函数）
  * 路由：GET /api/netease/url?p=<歌单ID>&i=<序号>
  *
  * 逻辑与 server.js 的 /api/netease/url 对齐：
- *   1) 按「歌单 ID + 序号」定位曲目，拿到歌曲 ID；
+ *   1) 按「歌单 ID + 序号」定位曲目，取出歌曲 ID；
  *   2) 向 Meting type=url 换取 302 的真实 CDN 直链；
- *   3) 带着 Range / Referer 转发音频流，保证拖动进度可用。
+ *   3) 带 Range / Referer 转发音频流，保证拖动进度可用。
  */
 const METING_API = 'https://meting.mikus.ink/api';
 const DEFAULT_PLAYLIST_ID = '18387867575';
@@ -93,7 +93,8 @@ async function resolveTrackUrl(item, id) {
     return null;
 }
 
-export async function onRequestGet({ request }) {
+async function handler(context) {
+    const request = context.request;
     const url = new URL(request.url);
     const playlistId = String(url.searchParams.get('p') || DEFAULT_PLAYLIST_ID).trim();
     const index = Number.parseInt(url.searchParams.get('i'), 10);
@@ -136,3 +137,7 @@ export async function onRequestGet({ request }) {
         return json({ success: false, error: '音频源不可用' }, 502);
     }
 }
+
+export default handler;
+export const onRequest = handler;
+export const onRequestGet = handler;

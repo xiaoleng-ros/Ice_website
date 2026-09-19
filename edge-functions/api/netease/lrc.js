@@ -1,5 +1,5 @@
 /**
- * EdgeOne Pages Function —— 网易云歌词（经 Meting 代理）
+ * EdgeOne Makers · Edge Function（边缘函数）
  * 路由：GET /api/netease/lrc?p=<歌单ID>&i=<序号>
  *
  * 返回纯文本（LRC）。逻辑与 server.js 的 /api/netease/lrc 对齐。
@@ -66,7 +66,8 @@ async function getPlaylistRaw(playlistId) {
     return raw;
 }
 
-export async function onRequestGet({ request }) {
+async function handler(context) {
+    const request = context.request;
     const url = new URL(request.url);
     const playlistId = String(url.searchParams.get('p') || DEFAULT_PLAYLIST_ID).trim();
     const index = Number.parseInt(url.searchParams.get('i'), 10);
@@ -120,3 +121,7 @@ export async function onRequestGet({ request }) {
         return json({ success: false, error: '歌词获取失败' }, 502);
     }
 }
+
+export default handler;
+export const onRequest = handler;
+export const onRequestGet = handler;
