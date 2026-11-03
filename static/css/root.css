@@ -1,113 +1,118 @@
 /* ============================================================
-   Iceuu · 全息频谱（Holographic Spectrum）设计令牌
-   语言：青紫双色全息 + 半透明分层 + 色差描边 + 投影层叠
-   两色分工：
-     青  #35E9FF —— 主色，承载"数据 / 状态 / 主读数"
-     紫  #B07CFF —— 副色，承载"结构 / 投影 / 第二层信息"
-     中间的蓝紫 #8FA8FF 只出现在青→紫的渐变过渡里，不单独使用
+   Iceuu · 和纸留白（Washi Minimal）设计令牌
+   语言：米白纸底 + 墨色文字 + 朱红点睛 + 发丝分隔线
+   三色分工：
+     墨  #1F1E1B —— 主文字 / 主要结构
+     朱  #C4402F —— 唯一点缀色，只用于强调、状态、焦点
+     灰  #9A968C —— 次要信息 / 标注
+   原则：不描边发光、不堆叠装饰，用留白与字距建立层次
    ============================================================ */
 
 :root {
-    /* ---------- 底色：深空紫蓝 ---------- */
-    --bg-void:        #03040C;
-    --bg-darker:      #02030A;
-    --bg-dark:        #05070F;
-    --bg-panel:       rgba(17, 19, 46, 0.55);
-    --bg-panel-hi:    rgba(27, 27, 68, 0.70);
-    --bg-inset:       rgba(7, 9, 22, 0.46);
+    /* ---------- 纸面 ---------- */
+    --paper:          #FAF9F5;
+    --paper-2:        #F3F1EA;
+    --paper-3:        #EDEAE1;
+    --paper-hi:       #FFFFFF;
 
-    /* ---------- 发丝线：偏全息白 ---------- */
-    --line-hair:      rgba(184, 206, 255, 0.10);
-    --line-1:         rgba(184, 206, 255, 0.17);
-    --line-2:         rgba(184, 206, 255, 0.30);
-    --line-accent:    rgba(53, 233, 255, 0.45);
-    --line-accent-hi: rgba(53, 233, 255, 0.85);
-    --line-violet:    rgba(176, 124, 255, 0.45);
-    --line-violet-hi: rgba(176, 124, 255, 0.85);
+    /* ---------- 墨色文字 ---------- */
+    --ink:            #1F1E1B;
+    --ink-2:          #55524B;
+    --ink-3:          #8C887E;
+    --ink-4:          #B4B0A5;
 
-    /* ---------- 文字 ---------- */
-    --text-hi:        #EAF1FF;
-    --text:           #A9B7DE;
-    --text-dim:       #7484AE;
-    --text-faint:     #4E5A7C;
+    /* ---------- 发丝线 ---------- */
+    --hair:           #E6E3DA;
+    --hair-2:         #D6D2C6;
+    --hair-ink:       rgba(31, 30, 27, 0.16);
 
-    /* ---------- 全息双色 ---------- */
-    --accent:         #35E9FF;   /* 青 · 主 */
-    --accent-2:       #B07CFF;   /* 紫 · 副 */
-    --accent-dim:     #1B8FB8;
-    --violet:         #B07CFF;
-    --violet-dim:     #6B3FBF;
-    --accent-soft:    rgba(53, 233, 255, 0.10);
-    --accent-soft-hi: rgba(53, 233, 255, 0.20);
-    --violet-soft:    rgba(176, 124, 255, 0.10);
-    --violet-soft-hi: rgba(176, 124, 255, 0.22);
-
-    /* ---------- 全息渐变 ---------- */
-    --holo-grad:      linear-gradient(96deg, #8CF3FF 0%, #35E9FF 28%, #8FA8FF 60%, #C77DFF 100%);
-    --holo-grad-line: linear-gradient(90deg, rgba(53, 233, 255, 0.85), rgba(176, 124, 255, 0.85));
+    /* ---------- 朱红 ---------- */
+    --vermilion:      #C4402F;
+    --vermilion-2:    #A63424;
+    --vermilion-soft: rgba(196, 64, 47, 0.08);
+    --vermilion-line: rgba(196, 64, 47, 0.32);
 
     /* ---------- 状态 ---------- */
-    --ok:             #4FE0A8;
-    --warn:           #FFB454;
+    --ok:             #4F7A5B;
+    --warn:           #B4832B;
 
-    /* ---------- 字形 ---------- */
-    --font-display:   "Orbitron", "Rajdhani", "b", sans-serif;
-    --font-hero:      "Sora", "Rajdhani", "b", -apple-system, sans-serif;
-    --font-brand:     "Audiowide", "Sora", "Rajdhani", "b", sans-serif;
+    /* ---------- 字形：衬线立骨，无衬线承载正文 ---------- */
+    --font-serif:     "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", Georgia, serif;
+    --font-sans:      "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, "Segoe UI", sans-serif;
     --font-mono:      "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
-    --font-body:      "b", "Rajdhani", -apple-system, "Segoe UI", sans-serif;
+    --font-display:   var(--font-serif);
+    --font-hero:      var(--font-serif);
+    --font-brand:     var(--font-serif);
+    --font-body:      var(--font-sans);
 
-    /* ---------- 几何：小圆角，拒绝"胶囊感" ---------- */
-    --r-sm: 3px;
-    --r-md: 5px;
-    --r-lg: 8px;
+    /* ---------- 几何：几乎不留圆角，只用直角与细线 ---------- */
+    --r-sm: 2px;
+    --r-md: 3px;
+    --r-lg: 4px;
 
-    /* ---------- 深度：青紫双层辉光 + 投影层叠 ---------- */
-    --edge-top:   inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    --edge-holo:  inset 0 0 26px rgba(53, 233, 255, 0.05);
-    --depth-card: 0 14px 40px rgba(0, 0, 0, 0.50), 0 0 34px rgba(124, 77, 255, 0.10);
-    --depth-pop:  0 22px 56px rgba(0, 0, 0, 0.62),
-                  0 0 46px rgba(53, 233, 255, 0.14),
-                  0 0 60px rgba(176, 124, 255, 0.12);
+    /* ---------- 深度：只有一层极浅投影，模拟纸张浮起 ---------- */
+    --depth-card: 0 1px 2px rgba(31, 30, 27, 0.04);
+    --depth-pop:  0 12px 40px rgba(31, 30, 27, 0.10);
 
-    /* ---------- 网格底纹：细网格偏白，粗网格青紫分色 ---------- */
-    --hud-grid:
-        linear-gradient(to right,  rgba(184, 206, 255, 0.055) 1px, transparent 1px) 0 0 / 34px 34px,
-        linear-gradient(to bottom, rgba(184, 206, 255, 0.055) 1px, transparent 1px) 0 0 / 34px 34px,
-        linear-gradient(to right,  rgba(53, 233, 255, 0.075) 1px, transparent 1px) 0 0 / 170px 170px,
-        linear-gradient(to bottom, rgba(176, 124, 255, 0.075) 1px, transparent 1px) 0 0 / 170px 170px;
+    /* ---------- 旧变量兼容（保持既有 HTML / JS 内联引用可用） ---------- */
+    --bg-void:        var(--paper);
+    --bg-darker:      var(--paper-2);
+    --bg-dark:        var(--paper);
+    --bg-panel:       var(--paper-2);
+    --bg-panel-hi:    var(--paper-3);
+    --bg-inset:       var(--paper-2);
 
-    /* ---------- 四角框：青紫对角错位（全息头显）----------
-       注意：这里必须写死颜色，不能写成 var(--corner)。
-       带 var() 的自定义属性会在 :root 上就被求值完，子元素再改 --corner 是无效的。
-       所以准备"常态/高亮"两套，hover 时整条 background 换掉。 */
-    --hud-corners:
-        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) left  6px top    6px / 11px 1px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) left  6px top    6px / 1px 11px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) right 6px top    6px / 11px 1px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) right 6px top    6px / 1px 11px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) left  6px bottom 6px / 11px 1px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.48), rgba(176, 124, 255, 0.48)) left  6px bottom 6px / 1px 11px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) right 6px bottom 6px / 11px 1px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.48), rgba(53, 233, 255, 0.48)) right 6px bottom 6px / 1px 11px no-repeat;
+    --line-hair:      var(--hair);
+    --line-1:         var(--hair);
+    --line-2:         var(--hair-2);
+    --line-accent:    var(--vermilion-line);
+    --line-accent-hi: var(--vermilion);
+    --line-violet:    var(--hair-2);
+    --line-violet-hi: var(--ink-2);
 
-    --hud-corners-hi:
-        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) left  6px top    6px / 14px 1px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) left  6px top    6px / 1px 14px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) right 6px top    6px / 14px 1px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) right 6px top    6px / 1px 14px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) left  6px bottom 6px / 14px 1px no-repeat,
-        linear-gradient(rgba(176, 124, 255, 0.95), rgba(176, 124, 255, 0.95)) left  6px bottom 6px / 1px 14px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) right 6px bottom 6px / 14px 1px no-repeat,
-        linear-gradient(rgba(53, 233, 255, 0.95), rgba(53, 233, 255, 0.95)) right 6px bottom 6px / 1px 14px no-repeat;
+    --text-hi:        var(--ink);
+    --text:           var(--ink-2);
+    --text-dim:       var(--ink-3);
+    --text-faint:     var(--ink-4);
 
-    /* ---------- 全息顶光带：模拟投影面自上方受光 ---------- */
-    --holo-sheen: linear-gradient(180deg, rgba(53, 233, 255, 0.10), rgba(176, 124, 255, 0.05) 44%, transparent 76%);
+    --accent:         var(--vermilion);
+    --accent-2:       var(--ink-2);
+    --accent-dim:     var(--vermilion-2);
+    --violet:         var(--ink-3);
+    --violet-dim:     var(--ink-4);
+    --accent-soft:    var(--vermilion-soft);
+    --accent-soft-hi: rgba(196, 64, 47, 0.14);
+    --violet-soft:    rgba(31, 30, 27, 0.04);
+    --violet-soft-hi: rgba(31, 30, 27, 0.07);
 
-    /* 面板底色（同样写死，避免 var() 提前求值） */
-    --panel-base:    linear-gradient(180deg, rgba(22, 24, 58, 0.52), rgba(8, 10, 26, 0.64));
-    --panel-base-hi: linear-gradient(180deg, rgba(53, 233, 255, 0.09), rgba(176, 124, 255, 0.06) 46%, rgba(8, 10, 26, 0.70));
-    --panel-solid:   linear-gradient(180deg, rgba(22, 24, 58, 0.46), rgba(8, 10, 26, 0.56));
+    --holo-grad:      linear-gradient(90deg, var(--ink), var(--vermilion));
+    --holo-grad-line: linear-gradient(90deg, var(--hair-2), var(--vermilion-line));
+
+    --fill:            var(--vermilion);
+    --main_bg_color:   var(--paper);
+    --main_text_color: var(--ink-2);
+    --text-primary:    var(--ink);
+    --text-secondary:  var(--ink-3);
+    --text-muted:      var(--ink-4);
+    --purple_text_color: var(--vermilion);
+    --item_bg_color:   var(--paper-2);
+    --item_hover_color: var(--paper-3);
+    --item_left_title_color: var(--ink);
+    --item_left_text_color:  var(--ink-3);
+    --footer_text_color:     var(--ink-3);
+    --left_tag_item:   var(--paper-2);
+    --bg-card:         var(--paper-hi);
+    --bg-card-hover:   var(--paper-2);
+    --border-card:     var(--hair);
+    --border-card-hover: var(--hair-2);
+    --primary-cyan:    var(--ink-2);
+    --primary-purple:  var(--vermilion);
+    --primary-green:   var(--ok);
+    --primary-pink:    var(--vermilion);
+    --card_filter:     0px;
+    --glass-effect:    none;
+    --cyber-grid:      none;
+    --shadow-cyber:    var(--depth-card);
 
     /* ---------- 层级 ---------- */
     --z-bg:     -1;
@@ -115,36 +120,6 @@
     --z-card:   10;
     --z-fixed:  100;
     --z-overlay: 1000;
-    --z-modal:  10000;
+    --z-modal: 10000;
     --z-cursor: 999999;
-
-    /* ============================================================
-       兼容别名：index.html 内联样式引用了 --fill，
-       其余别名仅为平滑过渡保留，新代码请直接用上面的语义变量。
-       ============================================================ */
-    --fill:            var(--accent);
-    --main_bg_color:   var(--bg-dark);
-    --main_text_color: var(--text);
-    --text-primary:    var(--text-hi);
-    --text-secondary:  var(--text-dim);
-    --text-muted:      var(--text-faint);
-    --purple_text_color: var(--accent-2);
-    --item_bg_color:   var(--bg-panel);
-    --item_hover_color: var(--bg-panel-hi);
-    --item_left_title_color: var(--text-hi);
-    --item_left_text_color:  var(--text-dim);
-    --footer_text_color:     var(--text-faint);
-    --left_tag_item:   var(--accent-soft);
-    --bg-card:         var(--bg-panel);
-    --bg-card-hover:   var(--bg-panel-hi);
-    --border-card:     var(--line-hair);
-    --border-card-hover: var(--line-accent);
-    --primary-cyan:    var(--accent);
-    --primary-purple:  var(--accent-2);
-    --primary-green:   var(--ok);
-    --primary-pink:    var(--accent-2);
-    --card_filter:     10px;
-    --glass-effect:    blur(16px) saturate(155%);
-    --cyber-grid:      var(--hud-grid);
-    --shadow-cyber:    var(--edge-top), var(--depth-card);
 }

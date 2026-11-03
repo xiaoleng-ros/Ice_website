@@ -266,6 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let sound;
     let isPlaying = false;
     let currentSongIndex = 0;
+    // 播放模式：order 顺序(默认) / repeat-one 单曲循环 / shuffle 随机
+    let playMode = 'order';
     let lyrics = [];
     let lyricsInterval;
     let volume = 1.0;
@@ -473,14 +475,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 lyricsContainer.style.display = 'none';
             },
             onend: function () {
-                isPlaying = false;
-                updatePlayPauseIcons(false);
-                recordPlayer.classList.remove('playing');
+                isPlaying = true; // 保持"正在播"状态，让 nextSong 自动续播
+                updatePlayPauseIcons(true);
+                recordPlayer.classList.add('playing');
                 clearInterval(lyricsInterval);
                 lyricsDisplay.textContent = '';
                 lyricsContainer.style.display = 'none';
-                // 自动播放下一首
-                nextSong();
+                // 单曲循环：原地重播；否则自动播放下一首
+                if (playMode === 'repeat-one') {
+                    sound.seek(0);
+                    sound.play();
+                } else {
+                    nextSong();
+                }
             },
             onstop: function () {
                 isPlaying = false;
@@ -528,20 +535,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function nextSong() {
         if (playlist.length === 0) return;
-        currentSongIndex = (currentSongIndex + 1) % playlist.length;
+        currentSongIndex = pickNextIndex(1);
         loadSong(currentSongIndex);
-        if (isPlaying) {
-            sound.play();
-        }
+        sound.play();
     }
 
     function prevSong() {
         if (playlist.length === 0) return;
-        currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+        currentSongIndex = pickNextIndex(-1);
         loadSong(currentSongIndex);
-        if (isPlaying) {
-            sound.play();
+        sound.play();
+    }
+
+    // 根据播放模式算下一首/上一首的索引。
+    // 单曲循环下：用户点上一首/下一首仍切换（onend 才原地重播）。
+    // 随机模式下 -1 也随机（避免反复横跳相邻两首）。
+    function pickNextIndex(direction) {
+        const n = playlist.length;
+        if (n <= 1) return 0;
+        if (playMode === 'shuffle' && n > 1) {
+            let next;
+            do {
+                next = Math.floor(Math.random() * n);
+            } while (next === currentSongIndex);
+            return next;
         }
+        return (currentSongIndex + direction + n) % n;
     }
 
     function formatTime(seconds) {
@@ -707,6 +726,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (nextBtn) {
         nextBtn.addEventListener('click', nextSong);
+    }
+
+    // 播放模式切换：顺序 → 单曲循环 → 随机 → 顺序
+    const modeBtn = document.getElementById('mode-btn');
+    const modeIcons = {
+        'order': document.getElementById('mode-icon-order'),
+        'repeat-one': document.getElementById('mode-icon-repeat-one'),
+        'shuffle': document.getElementById('mode-icon-shuffle')
+    };
+    const modeTitles = {
+        'order': '播放模式：顺序播放',
+        'repeat-one': '播放模式：单曲循环',
+        'shuffle': '播放模式：随机播放'
+    };
+    const modeOrder = ['order', 'repeat-one', 'shuffle'];
+
+    function updateModeIcon() {
+        for (const key of modeOrder) {
+            if (modeIcons[key]) modeIcons[key].style.display = (key === playMode) ? 'block' : 'none';
+        }
+        if (modeBtn) modeBtn.title = modeTitles[playMode];
+    }
+
+    if (modeBtn) {
+        modeBtn.addEventListener('click', function () {
+            playMode = modeOrder[(modeOrder.indexOf(playMode) + 1) % modeOrder.length];
+            updateModeIcon();
+        });
+        updateModeIcon();
     }
 
     // 音量控制事件

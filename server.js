@@ -65,6 +65,14 @@ app.use(express.static(__dirname, {
 // 见《前台网易云音乐播放器-通用方案.md》第 4 节
 // ============================================================
 const METING_API = process.env.MUSIC_API_BASE || 'https://meting.mikus.ink/api';
+// Meting 公共源回退列表：主源挂了（522/521/超时）自动尝试下一个
+const METING_APIS = [
+    METING_API,
+    'https://api.injahow.cn/meting/',
+    'https://meting.qjqq.cn/api/',
+    'https://api.i-meto.com/meting/api',
+    'https://api.wuenci.com/meting/api/'
+].filter((v, i, a) => a.indexOf(v) === i);
 const DEFAULT_PLAYLIST_ID = process.env.NETEASE_PLAYLIST_ID || '18387867575';
 // url 模式：stream = 服务端转发（默认，规避 CORS/Referer）；redirect = 302 直跳（省带宽）
 const URL_MODE = (process.env.MUSIC_URL_MODE || 'stream').toLowerCase();
@@ -83,8 +91,8 @@ function fetchWithTimeout(url, options = {}, ms = 10000) {
     return fetch(url, { ...options, signal: AbortSignal.timeout(ms) });
 }
 
-function metingUrl(type, id) {
-    const u = new URL(METING_API);
+function metingUrl(type, id, base) {
+    const u = new URL(base || METING_API);
     u.searchParams.set('server', 'netease');
     u.searchParams.set('type', type);
     u.searchParams.set('id', id);
@@ -92,6 +100,16 @@ function metingUrl(type, id) {
 }
 
 // 不同 Meting 实现字段不统一：有的给 id，有的只给完整的 url/lrc 地址
+// 判断 URL 是否为 Meting 代理地址（对它 GET 会 302 到 CDN，不能当直链用）
+function isMetingProxyUrl(url) {
+    try {
+        const u = new URL(url);
+        return /meting/i.test(u.hostname) || /meting/i.test(u.pathname);
+    } catch (_) {
+        return false;
+    }
+}
+
 function extractSongId(item, fallbackIndex, playlistId) {
     const direct = item.id ?? item.song_id ?? item.music_id;
     if (direct !== undefined && direct !== null && String(direct).trim() !== '') {
@@ -106,25 +124,30 @@ function extractSongId(item, fallbackIndex, playlistId) {
     return `${playlistId}:${fallbackIndex}`;
 }
 
-// 取歌单（带缓存），返回 Meting 原始数组
+// 取歌单（带缓存），返回 Meting 原始数组；逐源回退
 async function getPlaylistRaw(playlistId) {
     const cached = playlistCache.get(playlistId);
     if (cached && Date.now() - cached.time < PLAYLIST_TTL) {
         return cached.raw;
     }
 
-    const u = new URL(METING_API);
-    u.searchParams.set('server', 'netease');
-    u.searchParams.set('type', 'playlist');
-    u.searchParams.set('id', playlistId);
+    let lastError = null;
+    for (const base of METING_APIS) {
+        try {
+            const u = metingUrl('playlist', playlistId, base);
+            const upstream = await fetchWithTimeout(u, {}, 12000);
+            if (!upstream.ok) throw new Error(`Meting 返回 ${upstream.status}`);
+            const raw = await upstream.json();
+            if (!Array.isArray(raw) || raw.length === 0) throw new Error('Meting 返回格式异常');
 
-    const upstream = await fetchWithTimeout(u, {}, 12000);
-    if (!upstream.ok) throw new Error(`Meting 返回 ${upstream.status}`);
-    const raw = await upstream.json();
-    if (!Array.isArray(raw)) throw new Error('Meting 返回格式异常');
-
-    playlistCache.set(playlistId, { time: Date.now(), raw, payload: null });
-    return raw;
+            playlistCache.set(playlistId, { time: Date.now(), raw, payload: null, base });
+            return raw;
+        } catch (error) {
+            console.warn(`歌单源 ${base} 失败：${error.message}，尝试下一个源`);
+            lastError = error;
+        }
+    }
+    throw lastError || new Error('所有 Meting 源均不可用');
 }
 
 // 按「歌单 ID + 序号」定位曲目，兼容字段缺失的 Meting 实现
@@ -137,7 +160,15 @@ async function getTrack(playlistId, index) {
 
 // 向 Meting 换取音频直链：
 // 优先复用 Meting 给的 url 地址（302 的 Location 即真实 CDN 地址），
-// 否则退回 type=url&id=xxx 重新换一次
+// 否则退回 type=url&id=xxx 重新换一次。
+// 网易云 VIP/版权歌曲常只返回试听片段（30-60s，size 通常 < 1.5MB）：
+// 逐源尝试，挑选"看起来是完整版"（无 size 或 size 足够大）的直链，
+// 同时把试听版作为兜底记住——所有源都只有试听时仍可播放。
+function isTrialSize(item) {
+    const size = Number(item && item.size);
+    return Number.isFinite(size) && size > 0 && size < 1500 * 1024;
+}
+
 async function resolveTrackUrl(track) {
     const cached = trackUrlCache.get(track.id);
     if (cached && Date.now() - cached.time < TRACK_URL_TTL) {
@@ -145,11 +176,27 @@ async function resolveTrackUrl(track) {
     }
 
     const candidates = [];
-    if (typeof track.item.url === 'string' && /^https?:\/\//i.test(track.item.url)) {
-        candidates.push(track.item.url);
+    // 试听直链单独记，只有找不到完整版时才用
+    let trialFallback = null;
+
+    function judge(item, url) {
+        if (isTrialSize(item)) {
+            if (!trialFallback) trialFallback = url;
+            return false; // 试听片段，继续找完整版
+        }
+        return true;
+    }
+
+    if (typeof track.item.url === 'string' && /^https?:\/\//i.test(track.item.url) && !isMetingProxyUrl(track.item.url)) {
+        if (judge(track.item, track.item.url)) {
+            trackUrlCache.set(track.id, { time: Date.now(), url: track.item.url });
+            return track.item.url;
+        }
     }
     if (/^\d+$/.test(track.id)) {
-        candidates.push(metingUrl('url', track.id).toString());
+        for (const base of METING_APIS) {
+            candidates.push(metingUrl('url', track.id, base).toString());
+        }
     }
 
     for (const candidate of candidates) {
@@ -160,7 +207,18 @@ async function resolveTrackUrl(track) {
                 const text = (await res.text()).trim();
                 if (/^https?:\/\//i.test(text)) url = text;
             }
-            if (url) {
+            if (!url) continue;
+            // size 信息在 JSON 响应里，重发一次拿 body 判断（仅 redirect 时才需要）
+            if (res.status === 302 || res.status === 301) {
+                const probe = await fetchWithTimeout(candidate, { redirect: 'follow' });
+                let item = {};
+                try { item = await probe.json(); } catch (_) {}
+                const realUrl = item.url || url;
+                if (judge(item, realUrl)) {
+                    trackUrlCache.set(track.id, { time: Date.now(), url: realUrl });
+                    return realUrl;
+                }
+            } else if (judge({}, url)) {
                 trackUrlCache.set(track.id, { time: Date.now(), url });
                 return url;
             }
@@ -168,7 +226,39 @@ async function resolveTrackUrl(track) {
             console.warn('解析直链失败，尝试下一个候选：', error.message);
         }
     }
+    if (trialFallback) {
+        // 所有源都只有试听片段：缓存较短的 TTL，之后有机会换到完整版
+        trackUrlCache.set(track.id, { time: Date.now() - (TRACK_URL_TTL - 5 * 60 * 1000), url: trialFallback });
+        return trialFallback;
+    }
     return null;
+}
+
+// 探测直链是否仍有效：返回上游状态码（0 = 网络失败）。
+// 只取响应头，不下载 body。
+function probeUpstreamStatus(target) {
+    return new Promise((resolve) => {
+        let u;
+        try { u = new URL(target); } catch (_) { return resolve(0); }
+        const client = u.protocol === 'http:' ? http : https;
+        const req = client.request(u, {
+            method: 'GET',
+            headers: {
+                'User-Agent': UPSTREAM_UA,
+                'Referer': 'https://music.163.com/',
+                'Accept': '*/*',
+                // 只要头：Range 0-0 让上游返回 206 而非整文件
+                'Range': 'bytes=0-0'
+            },
+            timeout: 10000
+        }, (upRes) => {
+            upRes.destroy();
+            resolve(upRes.statusCode);
+        });
+        req.on('timeout', () => { req.destroy(); resolve(0); });
+        req.on('error', () => resolve(0));
+        req.end();
+    });
 }
 
 // 服务端转发音频流：透传 Range，保证拖动进度可用
@@ -233,8 +323,8 @@ app.get('/api/netease/playlist', async (req, res) => {
                 const ref = `p=${encodeURIComponent(playlistId)}&i=${index}`;
                 return {
                     id: extractSongId(item, index, playlistId),
-                    title: item.title || '未知曲目',
-                    artist: item.author || '未知歌手',
+                    title: item.title || item.name || item.song || '未知曲目',
+                    artist: item.author || item.artist || item.singer || '未知歌手',
                     cover: item.pic || '/static/img/music.png',
                     src: `/api/netease/url?${ref}`,
                     lyrics: `/api/netease/lrc?${ref}`
@@ -279,6 +369,19 @@ app.get('/api/netease/url', async (req, res) => {
         if (URL_MODE === 'redirect') {
             return res.redirect(302, target);
         }
+
+        // 先探测：缓存直链可能已过期（CDN 对失效链接回 302 错误页而非音频）
+        const probeStatus = await probeUpstreamStatus(target);
+        if (probeStatus >= 300 || probeStatus === 0) {
+            // 直链失效：清缓存重新解析一次
+            trackUrlCache.delete(track.id);
+            const fresh = await resolveTrackUrl(track);
+            if (fresh && fresh !== target) {
+                target = fresh;
+            } else if (!fresh) {
+                return res.status(502).json({ success: false, error: '音频源不可用' });
+            }
+        }
         streamAudio(target, req, res);
     } catch (error) {
         console.error('解析音频直链失败：', error.message);
@@ -314,7 +417,9 @@ app.get('/api/netease/lrc', async (req, res) => {
             sources.push(track.item.lrc);
         }
         if (/^\d+$/.test(track.id)) {
-            sources.push(metingUrl('lrc', track.id).toString());
+            for (const base of METING_APIS) {
+                sources.push(metingUrl('lrc', track.id, base).toString());
+            }
         }
 
         for (const source of sources) {
