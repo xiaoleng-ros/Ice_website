@@ -1,0 +1,113 @@
+/* ============================================================
+   Iceuu · 暗色模式（Ink Night）
+   覆盖 root.css 的浅色设计令牌；浅色为默认，暗色由
+   <html data-theme="dark"> 触发。配色延续「墨 / 朱 / 灰」语言：
+     夜纸 #14151A .. #24262E —— 纸面反转
+     月白 #EDEAE1 .. #8C887E —— 文字层级
+     朱红 #D9563F —— 唯一点缀色，暗底下提亮一档
+   ============================================================ */
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* 纸面 → 夜纸 */
+    --paper:          #14151A;
+    --paper-2:        #1B1D24;
+    --paper-3:        #24262E;
+    --paper-hi:       #1B1D24;
+
+    /* 墨色文字 → 月白 */
+    --ink:            #EDEAE1;
+    --ink-2:          #C9C6BC;
+    --ink-3:          #9A968C;
+    --ink-4:          #6E6B63;
+
+    /* 发丝线 */
+    --hair:           #2C2F38;
+    --hair-2:         #3A3E49;
+    --hair-ink:       rgba(237, 234, 225, 0.18);
+
+    /* 朱红点睛（暗底提亮） */
+    --vermilion:      #D9563F;
+    --vermilion-2:    #B84330;
+    --vermilion-soft: rgba(217, 86, 63, 0.14);
+    --vermilion-line: rgba(217, 86, 63, 0.42);
+
+    /* 状态 */
+    --ok:             #7FB08C;
+    --warn:           #C9A24B;
+
+    /* 深度：暗底上用更深的阴影模拟层次 */
+    --depth-card: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --depth-pop:  0 12px 40px rgba(0, 0, 0, 0.55);
+
+    /* 兼容旧变量（与 root.css 一一对应） */
+    --accent-soft-hi: rgba(217, 86, 63, 0.24);
+    --violet-soft:    rgba(237, 234, 225, 0.05);
+    --violet-soft-hi: rgba(237, 234, 225, 0.09);
+    --accent-2:       #9A968C;
+    --violet:         #9A968C;
+    --violet-dim:     #6E6B63;
+    --primary-cyan:   #C9C6BC;
+    --primary-purple: #D9563F;
+    --primary-pink:   #D9563F;
+
+    /* 半透明浮层（替代硬编码的 rgba(250,249,245,...)） */
+    --paper-glass:    rgba(20, 21, 26, 0.94);
+    --paper-glass-hi: rgba(20, 21, 26, 0.96);
+    --paper-glass-btn:rgba(20, 21, 26, 0.94);
+}
+
+/* ============================================================
+   主题切换按钮：右下角悬浮，与 footer / 播放器不重叠
+   ============================================================ */
+.theme-toggle {
+    position: fixed;
+    right: 20px;
+    bottom: 54px;
+    z-index: calc(var(--z-overlay) + 100); /* 高于歌词层，始终可点 */
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--hair-2);
+    border-radius: var(--r-sm);
+    background: var(--paper-glass-btn, var(--paper));
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background-color 0.28s ease, color 0.28s ease,
+                border-color 0.28s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--vermilion);
+    border-color: var(--vermilion-line);
+    transform: translateY(-2px);
+}
+
+.theme-toggle:active { transform: scale(0.92); }
+
+.theme-toggle .theme-icon {
+    width: 16px;
+    height: 16px;
+    display: none;
+}
+
+/* 默认（浅色）：显示月亮，点击切到暗色 */
+html:not([data-theme="dark"]) .theme-toggle .theme-icon-moon { display: block; }
+/* 暗色：显示太阳，点击切回浅色 */
+html[data-theme="dark"] .theme-toggle .theme-icon-sun { display: block; }
+
+/* 无 JS / 首屏未初始化前隐藏按钮，避免闪现 */
+html:not(.theme-ready) .theme-toggle { visibility: hidden; }
+
+@media (max-width: 768px) {
+    .theme-toggle {
+        right: 12px;
+        bottom: 62px;
+        width: 30px;
+        height: 30px;
+    }
+}

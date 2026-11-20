@@ -1,3 +1,46 @@
+// ============================================================
+// 主题切换：浅色（和纸留白）/ 暗色（墨夜），记忆到 localStorage
+// ============================================================
+(function () {
+    var root = document.documentElement;
+    var toggle = document.getElementById('theme-toggle');
+    var meta = document.getElementById('theme-color-meta');
+    // 与 <head> 内联脚本保持同一个 key：本地记忆优先，否则跟随系统
+    var stored = null;
+    try { stored = localStorage.getItem('iceuu-theme'); } catch (e) {}
+    var isDark = root.getAttribute('data-theme') === 'dark' ||
+        (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    function apply(theme) {
+        root.setAttribute('data-theme', theme);
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#14151A' : '#FAF9F5');
+        if (toggle) toggle.setAttribute('aria-label', theme === 'dark' ? '切换到浅色模式' : '切换到深色模式');
+        try { localStorage.setItem('iceuu-theme', theme); } catch (e) {}
+    }
+
+    apply(isDark ? 'dark' : 'light');
+    root.classList.add('theme-ready');
+
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            apply(next);
+        });
+    }
+
+    // 无手动选择时，跟随系统主题变化
+    if (window.matchMedia) {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var onSystemChange = function (e) {
+            var saved = null;
+            try { saved = localStorage.getItem('iceuu-theme'); } catch (err) {}
+            if (!saved) apply(e.matches ? 'dark' : 'light');
+        };
+        if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
+        else if (mq.addListener) mq.addListener(onSystemChange);
+    }
+})();
+
 // 减少动画偏好
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -310,51 +353,88 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ---------------------------------------------------------
-    // 纯静态兜底：同源 /api/netease/* 不可用时（纯静态托管、或边缘函数
-    // 未部署/故障），浏览器直连 Meting 公共接口。该接口 CORS 开放（*），
-    // 音频直链为 https 且支持 Range，实测可跨域直连、零后端。
-    // 参考《前台网易云音乐播放器-通用方案.md》第 3.2 节
+    // 纯静态兜底：EdgeOne 等静态托管没有 server.js，同源 /api/netease/*
+    // 会 404，此时浏览器直连 Meting 公共接口（CORS 全开）。
+    // 关键点：Meting 的 url 字段常是「代理地址」（type=url），直接当音频源
+    // 会 404 —— 必须 fetch 跟随 302 拿到 m801.music.126.net 的真实直链。
+    // 实测可用源：injahow（playlist/url/lrc 全通）、i-meto（仅 playlist/lrc）。
+    // mikus.ink 常 521、qjqq.cn 常 403，已从列表移除。
     // ---------------------------------------------------------
-    const METING_API = 'https://meting.mikus.ink/api';
+    const METING_API = 'https://api.injahow.cn/meting/';
+    const METING_FALLBACK_API = 'https://api.i-meto.com/meting/api';
     const DEFAULT_PLAYLIST_ID = '18387867575';
+    // 判断是否是 Meting 代理地址（而非真正的 CDN 音频直链）
+    function isMetingProxyUrl(url) {
+        return /meting/i.test(url) && /[?&]type=url\b/i.test(url);
+    }
+    // 跟随重定向解析真实音频直链：代理地址 => CDN 直链
+    async function resolveDirectUrl(proxyUrl) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), PLAYLIST_TIMEOUT);
+        try {
+            const res = await fetch(proxyUrl, { signal: ctrl.signal, redirect: 'follow' });
+            // 浏览器 fetch 跟随 302 后 response.url 已是最终 CDN 地址
+            const url = res.url && /^https?:\/\//i.test(res.url) ? res.url : proxyUrl;
+            return isMetingProxyUrl(url) ? null : url.replace(/^http:\/\//i, 'https://');
+        } catch (e) {
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 
     async function fetchDirectMetingPlaylist() {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), PLAYLIST_TIMEOUT);
+        let raw = null;
         try {
             const playlistId = getPlaylistIdFromUrl() || DEFAULT_PLAYLIST_ID;
-            const api = `${METING_API}?server=netease&type=playlist&id=${encodeURIComponent(playlistId)}`;
-            const response = await fetch(api, { signal: ctrl.signal });
-            if (!response.ok) return null;
-            const raw = await response.json();
-            if (!Array.isArray(raw)) return null;
-
-            const list = raw
-                .map(item => {
-                    if (!item || typeof item.url !== 'string' || !/^https?:\/\//i.test(item.url)) return null;
-                    // 从直链里抠出歌曲 ID（网易直链带 ?id=xxx），歌词走 Meting 的 lrc 接口
-                    let songId = '';
-                    try { songId = new URL(item.url).searchParams.get('id') || ''; } catch (e) { songId = ''; }
-                    const lyricsUrl = (typeof item.lrc === 'string' && /^https?:\/\//i.test(item.lrc))
-                        ? item.lrc
-                        : (songId ? `${METING_API}?server=netease&type=lrc&id=${encodeURIComponent(songId)}` : null);
-                    return {
-                        title: item.title || '未知曲目',
-                        artist: item.author || '未知歌手',
-                        cover: item.pic || '/static/img/music.png',
-                        // 网易直链已是 https；万一给 http 也强升 https，避免 https 页面被混合内容拦截
-                        src: item.url.replace(/^http:\/\//i, 'https://'),
-                        lyrics: lyricsUrl
-                    };
-                })
-                .filter(Boolean);
-            return list.length > 0 ? list : null;
+            for (const api of [METING_API, METING_FALLBACK_API]) {
+                try {
+                    const url = `${api}?server=netease&type=playlist&id=${encodeURIComponent(playlistId)}`;
+                    const response = await fetch(url, { signal: ctrl.signal });
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) { raw = data; break; }
+                } catch (e) { /* 换下一个源 */ }
+            }
         } catch (error) {
             console.warn('直连 Meting 兜底失败：', error.message);
             return null;
         } finally {
             clearTimeout(timer);
         }
+        if (!raw) return null;
+
+        // 并发解析每首歌的真实直链；解析失败的曲目直接丢弃
+        const resolved = await Promise.all(raw.map(async item => {
+            try {
+                if (!item || typeof item.url !== 'string' || !/^https?:\/\//i.test(item.url)) return null;
+                let src = item.url;
+                if (isMetingProxyUrl(src)) {
+                    src = await resolveDirectUrl(src);
+                    if (!src) return null;
+                }
+                src = src.replace(/^http:\/\//i, 'https://');
+                // 从 url 里抠出歌曲 ID，歌词走 Meting 的 lrc 接口
+                let songId = '';
+                try { songId = new URL(item.url).searchParams.get('id') || ''; } catch (e) { songId = ''; }
+                const lyricsUrl = (typeof item.lrc === 'string' && /^https?:\/\//i.test(item.lrc) && !isMetingProxyUrl(item.lrc))
+                    ? item.lrc
+                    : (songId ? `${METING_API}?server=netease&type=lrc&id=${encodeURIComponent(songId)}` : null);
+                return {
+                    title: item.title || item.name || '未知曲目',
+                    artist: item.author || item.artist || '未知歌手',
+                    cover: item.pic || '/static/img/music.png',
+                    src: src,
+                    lyrics: lyricsUrl
+                };
+            } catch (e) {
+                return null;
+            }
+        }));
+        const list = resolved.filter(Boolean);
+        return list.length > 0 ? list : null;
     }
 
     async function fetchMusicList() {

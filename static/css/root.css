@@ -15,6 +15,11 @@
     --paper-3:        #EDEAE1;
     --paper-hi:       #FFFFFF;
 
+    /* 半透明浮层（主题切换统一变量） */
+    --paper-glass:     rgba(250, 249, 245, 0.94);
+    --paper-glass-hi:  rgba(250, 249, 245, 0.96);
+    --paper-glass-btn: rgba(250, 249, 245, 0.94);
+
     /* ---------- 墨色文字 ---------- */
     --ink:            #1F1E1B;
     --ink-2:          #55524B;
